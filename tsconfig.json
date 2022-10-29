@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "outDir": "./lib/cjs",
+    "allowJs": true,
+    "target": "ES5",
+    "module": "CommonJS",
+    "strict": false,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "importsNotUsedAsValues": "error",
+    "importHelpers": true,
+    "noEmitHelpers": true,
+    "lib": [
+      "ES5",
+      "ES2015",
+      "ES2020.BigInt",
+      "ES2021.WeakRef",
+      "DOM"
+    ],
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}
