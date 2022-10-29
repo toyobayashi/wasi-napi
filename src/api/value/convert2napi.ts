@@ -221,9 +221,7 @@ function napi_create_bigint_words (this: IAPI, env: napi_env, sign_bit: int, wor
       value *= ((BigInt(sign_bit) % BigInt(2) === BigInt(0)) ? BigInt(1) : BigInt(-1))
       result = Number(result)
 
-      // @ts-expect-error
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const v = emnapi.addToCurrentScope(envObject, value).id
+      const v = ctx.addToCurrentScope(envObject, value).id
       const wasm64 = _wasm64.get(this)!
       setValue(view, result, v, '*', wasm64)
       return envObject.clearLastError()
