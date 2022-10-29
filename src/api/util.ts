@@ -91,8 +91,8 @@ export function setValue (view: DataView, ptr: number, value: number | bigint, t
 
 const UTF8Decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf8') : undefined
 
-function UTF8ArrayToString (heapOrArray: Uint8Array, idx: number, maxBytesToRead: number): string {
-  const endIdx = idx + maxBytesToRead
+function UTF8ArrayToString (heapOrArray: Uint8Array, idx: number, maxBytesToRead?: number): string {
+  const endIdx = idx + maxBytesToRead!
   let endPtr = idx
   while (heapOrArray[endPtr] && !(endPtr >= endIdx)) ++endPtr
   if (endPtr - idx > 16 && heapOrArray.buffer && UTF8Decoder) {
@@ -126,7 +126,7 @@ function UTF8ArrayToString (heapOrArray: Uint8Array, idx: number, maxBytesToRead
   return str
 }
 
-export function UTF8ToString (heap: Uint8Array, ptr: number, maxBytesToRead: number): string {
+export function UTF8ToString (heap: Uint8Array, ptr: number, maxBytesToRead?: number): string {
   return ptr ? UTF8ArrayToString(heap, ptr, maxBytesToRead) : ''
 }
 
@@ -197,4 +197,22 @@ export function stringToUTF16Array (str: string, view: DataView, outPtr: number,
   }
   view.setUint16(outPtr, 0, true)
   return outPtr - startPtr
+}
+
+const UTF16Decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-16le') : undefined
+
+export function UTF16ToString (view: DataView, ptr: number, maxBytesToRead?: number): string {
+  let endPtr = ptr
+  let idx = endPtr >> 1
+  const maxIdx = idx + maxBytesToRead! / 2
+  while (!(idx >= maxIdx) && view.getUint16(idx * 2, true)) ++idx
+  endPtr = idx << 1
+  if (endPtr - ptr > 32 && UTF16Decoder) return UTF16Decoder.decode(new Uint8Array(view.buffer).subarray(ptr, endPtr))
+  let str = ''
+  for (let i = 0; !(i >= maxBytesToRead! / 2); ++i) {
+    const codeUnit = view.getInt16(ptr + i * 2, true)
+    if (codeUnit === 0) break
+    str += String.fromCharCode(codeUnit)
+  }
+  return str
 }

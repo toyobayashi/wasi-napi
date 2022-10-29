@@ -93,7 +93,8 @@ module.exports = defineConfig({
         path: dist
       },
       minify: false,
-      type: 'umd'
+      type: 'umd',
+      strict: false
     },
     {
       entry,
@@ -102,7 +103,8 @@ module.exports = defineConfig({
         path: dist
       },
       minify: true,
-      type: 'umd'
+      type: 'umd',
+      strict: false
     },
     {
       entry,

@@ -23,7 +23,7 @@
   "author": "toyobayashi",
   "license": "MIT",
   "devDependencies": {
-    "@tybys/tsgo": "^1.1.1",
+    "@tybys/tsgo": "^1.2.0",
     "@tybys/ts-transform-module-specifier": "^0.0.2",
     "@tybys/ts-transform-pure-class": "^0.1.1",
     "@types/node": "^14.14.31",
