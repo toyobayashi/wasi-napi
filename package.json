@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsgo build",
     "watch": "tsgo watch",
+    "test": "node ./test/script/test.js",
     "lint": "eslint ./src/**/*.{ts,js} --fix",
     "prepare": "npm run build"
   },
@@ -29,11 +30,13 @@
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^5.32.0",
     "@typescript-eslint/parser": "^5.32.0",
+    "chalk": "^4.1.1",
     "eslint": "^8.21.0",
     "eslint-config-standard-with-typescript": "^22.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-n": "^15.2.4",
     "eslint-plugin-promise": "^6.0.0",
+    "glob": "^7.2.0",
     "ts-node": "^10.9.1",
     "typescript": "~4.8.3"
   },

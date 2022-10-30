@@ -276,7 +276,7 @@ function wapi_create_external_uint8array (
         throw new RangeError('Memory out of range')
       }
       if (!supportFinalizer && finalize_cb) {
-        throw new NotSupportWeakRefError('emnapi_create_external_uint8array', 'Parameter "finalize_cb" must be 0(NULL)')
+        throw new NotSupportWeakRefError('wapi_create_external_uint8array', 'Parameter "finalize_cb" must be 0(NULL)')
       }
       const u8arr = new Uint8Array(HEAPU8.buffer, external_data, byte_length)
       const handle = ctx.addToCurrentScope(envObject, u8arr)

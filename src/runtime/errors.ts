@@ -1,10 +1,10 @@
-class EmnapiError extends Error {
+class WapiError extends Error {
   constructor (message?: string) {
     super(message)
     const ErrorConstructor: any = new.target
     const proto = ErrorConstructor.prototype
 
-    if (!(this instanceof EmnapiError)) {
+    if (!(this instanceof WapiError)) {
       const setPrototypeOf = (Object as any).setPrototypeOf
       if (typeof setPrototypeOf === 'function') {
         setPrototypeOf.call(Object, this, proto)
@@ -19,13 +19,13 @@ class EmnapiError extends Error {
   }
 }
 
-Object.defineProperty(EmnapiError.prototype, 'name', {
+Object.defineProperty(WapiError.prototype, 'name', {
   configurable: true,
   writable: true,
-  value: 'EmnapiError'
+  value: 'WapiError'
 })
 
-class NotSupportWeakRefError extends EmnapiError {
+class NotSupportWeakRefError extends WapiError {
   constructor (api: string, message: string) {
     super(`${api}: The current runtime does not support "FinalizationRegistry" and "WeakRef".${message ? ` ${message}` : ''}`)
   }
@@ -37,7 +37,7 @@ Object.defineProperty(NotSupportWeakRefError.prototype, 'name', {
   value: 'NotSupportWeakRefError'
 })
 
-class NotSupportBigIntError extends EmnapiError {
+class NotSupportBigIntError extends WapiError {
   constructor (api: string, message: string) {
     super(`${api}: The current runtime does not support "BigInt".${message ? ` ${message}` : ''}`)
   }
@@ -50,7 +50,7 @@ Object.defineProperty(NotSupportBigIntError.prototype, 'name', {
 })
 
 export {
-  EmnapiError,
+  WapiError,
   NotSupportWeakRefError,
   NotSupportBigIntError
 }

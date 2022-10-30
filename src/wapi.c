@@ -37,7 +37,7 @@ extern napi_status napi_set_last_error(napi_env env,
                                        void* engine_reserved);
 extern napi_status napi_clear_last_error(napi_env env);
 
-const char* emnapi_error_messages[] = {
+const char* error_messages[] = {
   NULL,
   "Invalid argument",
   "An object was expected",
@@ -64,7 +64,7 @@ const char* emnapi_error_messages[] = {
 
 NAPI_MODULE_EXPORT
 const char** wapi_error_messages_get() {
-  return emnapi_error_messages;
+  return error_messages;
 }
 
 napi_status
