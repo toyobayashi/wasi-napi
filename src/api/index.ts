@@ -1,10 +1,7 @@
 import type { Context } from '../runtime/Context'
 import { Env } from '../runtime/env'
 import { HandleScope } from '../runtime/HandleScope'
-import './value/convert2c'
-import './value/convert2napi'
-import './value/global'
-import { API } from './api'
+import { API } from './implement'
 import { toPtr } from './util'
 
 const kSetMemory = Symbol('kSetMemory')
