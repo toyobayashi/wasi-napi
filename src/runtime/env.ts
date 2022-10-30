@@ -7,7 +7,7 @@ import { HandleScope } from './HandleScope'
 import { RefBase } from './RefBase'
 
 export interface ILastError {
-  setErrorMessage: (ptr: number) => void
+  setErrorMessage: (ptr: number | bigint) => void
   getErrorCode: () => number
   setErrorCode: (code: number) => void
   data: number

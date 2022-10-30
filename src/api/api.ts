@@ -1,7 +1,10 @@
 import { Reference } from '../runtime/Reference'
 import type { Context } from '../runtime/Context'
-import { Memory, extendMemory, toPtr, setValue } from './util'
-import type { ILastError } from '../runtime/env'
+import { Memory, extendMemory, toPtr, setValue, UTF8ToString } from './util'
+import type { Env, ILastError } from '../runtime/env'
+import { CallbackInfo } from '../runtime/CallbackInfo'
+import { HandleScope } from '../runtime/HandleScope'
+import { canSetFunctionName, supportBigInt, supportFinalizer, supportNewFunction } from '../runtime/util'
 
 export interface IWrap {
   wasm64: boolean
@@ -66,6 +69,31 @@ export function implement (name: string, fn: Function): void {
   API.prototype[name] = fn
 }
 
+function napi_set_last_error (this: IAPI, env: napi_env, error_code: napi_status, engine_error_code: uint32_t, engine_reserved: void_p): napi_status {
+  const { ctx } = _private.get(this)!
+  const envObject = ctx.envStore.get(env)!
+  return envObject.setLastError(error_code, engine_error_code, engine_reserved)
+}
+
+function napi_clear_last_error (this: IAPI, env: napi_env): napi_status {
+  const { ctx } = _private.get(this)!
+  const envObject = ctx.envStore.get(env)!
+  return envObject.clearLastError()
+}
+
+function wapi_is_support_weakref (): number {
+  return supportFinalizer ? 1 : 0
+}
+
+function wapi_is_support_bigint (): number {
+  return supportBigInt ? 1 : 0
+}
+
+implement('napi_set_last_error', napi_set_last_error)
+implement('napi_clear_last_error', napi_clear_last_error)
+implement('wapi_is_support_weakref', wapi_is_support_weakref)
+implement('wapi_is_support_bigint', wapi_is_support_bigint)
+
 export function getArrayBufferPointer (this: IAPI, arrayBuffer: ArrayBuffer): void_p {
   const wrap = _private.get(this)!
   const memory = wrap.memory
@@ -117,6 +145,89 @@ export function getViewPointer (this: IAPI, view: ArrayBufferView): void_p {
   typedArrayMemoryMap.set(view, pointer)
   memoryPointerDeleter.register(view, pointer)
   return pointer
+}
+
+export function setErrorCode (this: IAPI, envObject: Env, error: Error & { code?: string }, code: napi_value, code_string: const_char_p): napi_status {
+  if (code || code_string) {
+    let codeValue: string
+    if (code) {
+      codeValue = _private.get(this)!.ctx.handleStore.get(code)!.value
+      if (typeof codeValue !== 'string') {
+        return envObject.setLastError(napi_status.napi_string_expected)
+      }
+    } else {
+      code_string = Number(code_string)
+      codeValue = UTF8ToString(_private.get(this)!.memory.HEAPU8, code_string)
+    }
+    error.code = codeValue
+  }
+  return napi_status.napi_ok
+}
+
+export function createFunction<F extends (...args: any[]) => any> (this: IAPI, envObject: Env, utf8name: Ptr, length: size_t, cb: napi_callback, data: void_p): { status: napi_status; f: F } {
+  length = Number(length)
+  utf8name = Number(utf8name)
+  cb = Number(cb)
+  const { ctx, memory } = _private.get(this)!
+  const HEAPU8 = memory.HEAPU8
+
+  const functionName = (!utf8name || !length) ? '' : (length === -1 ? UTF8ToString(HEAPU8, utf8name) : UTF8ToString(HEAPU8, utf8name, length))
+
+  let f: F
+
+  const makeFunction = () => function (this: any): any {
+    'use strict'
+    const newTarget = this && this instanceof f ? this.constructor : undefined
+    const cbinfo = CallbackInfo.create(
+      envObject,
+      this,
+      data,
+      arguments.length,
+      Array.prototype.slice.call(arguments),
+      newTarget
+    )
+    const scope = ctx.openScope(envObject, HandleScope)
+    let r: napi_value
+    try {
+      r = envObject.callIntoModule((envObject) => {
+        const napiValue = envObject.emnapiGetDynamicCalls.call_ppp(cb, envObject.id, cbinfo.id)
+        return (!napiValue) ? undefined : ctx.handleStore.get(napiValue)!.value
+      })
+    } catch (err) {
+      cbinfo.dispose()
+      ctx.closeScope(envObject, scope)
+      throw err
+    }
+    cbinfo.dispose()
+    ctx.closeScope(envObject, scope)
+    return r
+  }
+
+  if (functionName === '') {
+    f = makeFunction() as F
+  } else {
+    if (!(/^[_$a-zA-Z][_$a-zA-Z0-9]*$/.test(functionName))) {
+      return { status: napi_status.napi_invalid_arg, f: undefined! }
+    }
+    if (supportNewFunction) {
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+      f = (new Function('_',
+        'return function ' + functionName + '(){' +
+          '"use strict";' +
+          'return _.apply(this,arguments);' +
+        '};'
+      ))(makeFunction())
+    } else {
+      f = makeFunction() as F
+      if (canSetFunctionName) {
+        Object.defineProperty(f, 'name', {
+          value: functionName
+        })
+      }
+    }
+  }
+
+  return { status: napi_status.napi_ok, f }
 }
 
 export function wrap (this: IAPI, type: WrapType, env: napi_env, js_object: napi_value, native_object: void_p, finalize_cb: napi_finalize, finalize_hint: void_p, result: Ptr): napi_status {

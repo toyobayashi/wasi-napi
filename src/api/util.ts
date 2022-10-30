@@ -243,3 +243,7 @@ export function createTypedArray (envObject: Env, Type: { new (...args: any[]): 
   const out = new Type(buffer, byte_offset, length)
   return callback(out)
 }
+
+export function abort (message?: string): never {
+  throw new WebAssembly.RuntimeError(`Aborted("${message ?? ''}")`)
+}
