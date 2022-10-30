@@ -1,3 +1,5 @@
+import type { Env } from '../runtime/env'
+
 export function toPtr (p: Ptr, wasm64: true): bigint
 export function toPtr (p: Ptr, wasm64: false): number
 export function toPtr (p: Ptr, wasm64: boolean): Ptr
@@ -215,4 +217,29 @@ export function UTF16ToString (view: DataView, ptr: number, maxBytesToRead?: num
     str += String.fromCharCode(codeUnit)
   }
   return str
+}
+
+export function createTypedArray (envObject: Env, Type: { new (...args: any[]): ArrayBufferView; name?: string }, size_of_element: number, buffer: ArrayBuffer, byte_offset: size_t, length: size_t, callback: (out: ArrayBufferView) => napi_status): napi_status {
+  byte_offset = Number(byte_offset)
+  length = Number(length)
+  size_of_element = Number(size_of_element)
+
+  byte_offset = byte_offset >>> 0
+  length = length >>> 0
+  if (size_of_element > 1) {
+    if ((byte_offset) % (size_of_element) !== 0) {
+      const err: RangeError & { code?: string } = new RangeError(`start offset of ${Type.name ?? ''} should be a multiple of ${size_of_element}`)
+      err.code = 'ERR_NAPI_INVALID_TYPEDARRAY_ALIGNMENT'
+      envObject.tryCatch.setError(err)
+      return envObject.setLastError(napi_status.napi_generic_failure)
+    }
+  }
+  if (((length * size_of_element) + byte_offset) > buffer.byteLength) {
+    const err: RangeError & { code?: string } = new RangeError('Invalid typed array length')
+    err.code = 'ERR_NAPI_INVALID_TYPEDARRAY_LENGTH'
+    envObject.tryCatch.setError(err)
+    return envObject.setLastError(napi_status.napi_generic_failure)
+  }
+  const out = new Type(buffer, byte_offset, length)
+  return callback(out)
 }

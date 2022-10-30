@@ -1,11 +1,10 @@
-import { implement, _ctx, _memory, _wasm64 } from '../api'
+import { implement, wrap, _ctx, _memory, _wasm64 } from '../api'
 import type { IAPI } from '../api'
-import { setValue, UTF8ToString } from '../util'
+import { createTypedArray, setValue, UTF8ToString } from '../util'
 import { supportFinalizer } from '../../runtime/util'
 import { NotSupportWeakRefError } from '../../runtime/errors'
 import { ExternalHandle } from '../../runtime/Handle'
 import { Reference } from '../../runtime/Reference'
-import type { Env } from '../../runtime/env'
 
 function napi_create_array (this: IAPI, env: napi_env, result: Ptr): napi_status {
   const ctx = _ctx.get(this)!
@@ -142,31 +141,6 @@ function napi_create_symbol (this: IAPI, env: napi_env, description: napi_value,
   })
 }
 
-function emnapiCreateTypedArray (envObject: Env, Type: { new (...args: any[]): ArrayBufferView; name?: string }, size_of_element: number, buffer: ArrayBuffer, byte_offset: size_t, length: size_t, callback: (out: ArrayBufferView) => napi_status): napi_status {
-  byte_offset = Number(byte_offset)
-  length = Number(length)
-  size_of_element = Number(size_of_element)
-
-  byte_offset = byte_offset >>> 0
-  length = length >>> 0
-  if (size_of_element > 1) {
-    if ((byte_offset) % (size_of_element) !== 0) {
-      const err: RangeError & { code?: string } = new RangeError(`start offset of ${Type.name ?? ''} should be a multiple of ${size_of_element}`)
-      err.code = 'ERR_NAPI_INVALID_TYPEDARRAY_ALIGNMENT'
-      envObject.tryCatch.setError(err)
-      return envObject.setLastError(napi_status.napi_generic_failure)
-    }
-  }
-  if (((length * size_of_element) + byte_offset) > buffer.byteLength) {
-    const err: RangeError & { code?: string } = new RangeError('Invalid typed array length')
-    err.code = 'ERR_NAPI_INVALID_TYPEDARRAY_LENGTH'
-    envObject.tryCatch.setError(err)
-    return envObject.setLastError(napi_status.napi_generic_failure)
-  }
-  const out = new Type(buffer, byte_offset, length)
-  return callback(out)
-}
-
 function napi_create_typedarray (
   this: IAPI, env: napi_env,
   type: napi_typedarray_type,
@@ -196,27 +170,27 @@ function napi_create_typedarray (
 
       switch (type) {
         case napi_typedarray_type.napi_int8_array:
-          return emnapiCreateTypedArray(envObject, Int8Array, 1, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Int8Array, 1, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_uint8_array:
-          return emnapiCreateTypedArray(envObject, Uint8Array, 1, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Uint8Array, 1, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_uint8_clamped_array:
-          return emnapiCreateTypedArray(envObject, Uint8ClampedArray, 1, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Uint8ClampedArray, 1, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_int16_array:
-          return emnapiCreateTypedArray(envObject, Int16Array, 2, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Int16Array, 2, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_uint16_array:
-          return emnapiCreateTypedArray(envObject, Uint16Array, 2, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Uint16Array, 2, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_int32_array:
-          return emnapiCreateTypedArray(envObject, Int32Array, 4, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Int32Array, 4, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_uint32_array:
-          return emnapiCreateTypedArray(envObject, Uint32Array, 4, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Uint32Array, 4, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_float32_array:
-          return emnapiCreateTypedArray(envObject, Float32Array, 4, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Float32Array, 4, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_float64_array:
-          return emnapiCreateTypedArray(envObject, Float64Array, 8, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, Float64Array, 8, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_bigint64_array:
-          return emnapiCreateTypedArray(envObject, BigInt64Array, 8, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, BigInt64Array, 8, buffer, byte_offset, length, retCallback)
         case napi_typedarray_type.napi_biguint64_array:
-          return emnapiCreateTypedArray(envObject, BigUint64Array, 8, buffer, byte_offset, length, retCallback)
+          return createTypedArray(envObject, BigUint64Array, 8, buffer, byte_offset, length, retCallback)
         default:
           return envObject.setLastError(napi_status.napi_invalid_arg)
       }
@@ -282,12 +256,64 @@ function node_api_symbol_for (this: IAPI, env: napi_env, utf8description: const_
   })
 }
 
+function wapi_create_external_uint8array (
+  this: IAPI,
+  env: napi_env,
+  external_data: void_p,
+  byte_length: size_t,
+  finalize_cb: napi_finalize,
+  finalize_hint: void_p,
+  result: Ptr
+): napi_status {
+  const ctx = _ctx.get(this)!
+  return ctx.preamble(env, (envObject) => {
+    return ctx.checkArgs(envObject, [result], () => {
+      byte_length = Number(byte_length)
+      external_data = Number(external_data)
+      result = Number(result)
+
+      byte_length = byte_length >>> 0
+
+      if (!external_data) {
+        byte_length = 0
+      }
+
+      if (byte_length > 2147483647) {
+        throw new RangeError('Cannot create a Uint8Array larger than 2147483647 bytes')
+      }
+      const { view, HEAPU8 } = _memory.get(this)!
+      const wasm64 = _wasm64.get(this)!
+      if ((external_data + byte_length) > HEAPU8.buffer.byteLength) {
+        throw new RangeError('Memory out of range')
+      }
+      if (!supportFinalizer && finalize_cb) {
+        throw new NotSupportWeakRefError('emnapi_create_external_uint8array', 'Parameter "finalize_cb" must be 0(NULL)')
+      }
+      const u8arr = new Uint8Array(HEAPU8.buffer, external_data, byte_length)
+      const handle = ctx.addToCurrentScope(envObject, u8arr)
+      if (finalize_cb) {
+        const status = wrap.call(this, WrapType.anonymous, env, handle.id, external_data, finalize_cb, finalize_hint, 0)
+        if (status === napi_status.napi_pending_exception) {
+          const err = envObject.tryCatch.extractException()
+          envObject.clearLastError()
+          throw err
+        } else if (status !== napi_status.napi_ok) {
+          return envObject.setLastError(status)
+        }
+      }
+      setValue(view, result, handle.id, '*', wasm64)
+      return envObject.getReturnStatus()
+    })
+  })
+}
+
 implement('napi_create_array', napi_create_array)
 implement('napi_create_array_with_length', napi_create_array_with_length)
 implement('napi_create_arraybuffer', napi_create_arraybuffer)
 implement('napi_create_date', napi_create_date)
 implement('napi_create_external', napi_create_external)
 // implement('napi_create_external_arraybuffer', napi_create_external_arraybuffer, ['napi_set_last_error'])
+implement('wapi_create_external_uint8array', wapi_create_external_uint8array)
 implement('napi_create_object', napi_create_object)
 implement('napi_create_symbol', napi_create_symbol)
 implement('napi_create_typedarray', napi_create_typedarray)

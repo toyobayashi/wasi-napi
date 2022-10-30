@@ -1,6 +1,7 @@
-import type { ILastError } from '../runtime'
+import { Reference } from '../runtime/Reference'
 import type { Context } from '../runtime/Context'
-import { Memory, extendMemory, toPtr } from './util'
+import { Memory, extendMemory, toPtr, setValue } from './util'
+import type { ILastError } from '../runtime/env'
 
 export const _wasm64 = new WeakMap<IAPI, boolean>()
 export const _memory = new WeakMap<IAPI, Memory>()
@@ -91,4 +92,41 @@ export function getViewPointer (this: IAPI, view: ArrayBufferView): void_p {
   typedArrayMemoryMap.set(view, pointer)
   memoryPointerDeleter.register(view, pointer)
   return pointer
+}
+
+export function wrap (this: IAPI, type: WrapType, env: napi_env, js_object: napi_value, native_object: void_p, finalize_cb: napi_finalize, finalize_hint: void_p, result: Ptr): napi_status {
+  const ctx = _ctx.get(this)!
+  return ctx.preamble(env, (envObject) => {
+    return ctx.checkArgs(envObject, [js_object], () => {
+      const value = ctx.handleStore.get(js_object)!
+      if (!(value.isObject() || value.isFunction())) {
+        return envObject.setLastError(napi_status.napi_invalid_arg)
+      }
+
+      if (type === WrapType.retrievable) {
+        if (value.wrapped !== 0) {
+          return envObject.setLastError(napi_status.napi_invalid_arg)
+        }
+      } else if (type === WrapType.anonymous) {
+        if (!finalize_cb) return envObject.setLastError(napi_status.napi_invalid_arg)
+      }
+
+      let reference: Reference
+      if (result) {
+        if (!finalize_cb) return envObject.setLastError(napi_status.napi_invalid_arg)
+        reference = Reference.create(envObject, value.id, 0, false, finalize_cb, native_object, finalize_hint)
+        result = Number(result)
+        const view = _memory.get(this)!.view
+        const wasm64 = _wasm64.get(this)!
+        setValue(view, result, reference.id, '*', wasm64)
+      } else {
+        reference = Reference.create(envObject, value.id, 0, true, finalize_cb, native_object, !finalize_cb ? finalize_cb : finalize_hint)
+      }
+
+      if (type === WrapType.retrievable) {
+        value.wrapped = reference.id
+      }
+      return envObject.getReturnStatus()
+    })
+  })
 }
