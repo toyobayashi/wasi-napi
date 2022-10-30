@@ -33,6 +33,7 @@ export const _global: typeof globalThis = (function () {
   return g
 })()
 
+/** @internal */
 export class TryCatch {
   private _exception: any = undefined
   private _caught: boolean = false
@@ -80,8 +81,6 @@ try {
 export const supportReflect = typeof Reflect === 'object'
 export const supportFinalizer = (typeof FinalizationRegistry !== 'undefined') && (typeof WeakRef !== 'undefined')
 export const supportBigInt = typeof BigInt !== 'undefined'
-
-export type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Int32Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array
 
 export function isReferenceType (v: any): v is object {
   return (typeof v === 'object' && v !== null) || typeof v === 'function'

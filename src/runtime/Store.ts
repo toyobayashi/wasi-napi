@@ -1,3 +1,4 @@
+/** @internal */
 export interface IStoreValue {
   id: number
   dispose (): void
@@ -43,6 +44,7 @@ class Queue<T> {
   }
 } */
 
+/** @internal */
 export class Store<V extends IStoreValue> {
   protected _values: Array<V | undefined>
   private _freeList: number[]

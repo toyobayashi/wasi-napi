@@ -1,10 +1,12 @@
 import type { Env } from './env'
 
+/** @internal */
 export const enum EnvReferenceMode {
   kNoEnvReference,
   kKeepEnvReference
 }
 
+/** @internal */
 export class Finalizer {
   protected _hasEnvReference: boolean
   protected _finalizeRan: boolean

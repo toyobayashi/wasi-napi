@@ -2,5 +2,5 @@
  * @packageDocumentation
  */
 
-export * from './runtime/index'
-export * from './api/index'
+export { Context } from './runtime/Context'
+export { NodeAPI } from './api/index'

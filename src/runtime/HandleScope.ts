@@ -4,6 +4,7 @@ import { _global } from './util'
 import type { Env } from './env'
 import type { Context } from './Context'
 
+/** @internal */
 export interface IHandleScope extends IStoreValue {
   parent: IHandleScope | null
   child: IHandleScope | null
@@ -14,6 +15,7 @@ export interface IHandleScope extends IStoreValue {
   dispose (): void
 }
 
+/** @internal */
 export class HandleScope implements IHandleScope {
   public id: number
   public parent: IHandleScope | null
@@ -96,6 +98,7 @@ export class HandleScope implements IHandleScope {
   }
 }
 
+/** @internal */
 export class EscapableHandleScope extends HandleScope {
   public static create (ctx: Context, parentScope: IHandleScope | null): EscapableHandleScope {
     return EscapableHandleScope._create(ctx, parentScope)

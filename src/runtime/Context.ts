@@ -9,15 +9,23 @@ import { HandleScope } from './HandleScope'
 import type { IHandleScope } from './HandleScope'
 import type { Env } from './env'
 
+/** @public */
 export class Context {
+  /** @internal */
   public envStore: EnvStore
+  /** @internal */
   public scopeStore: ScopeStore
+  /** @internal */
   public refStore: RefStore
+  /** @internal */
   public deferredStore: DeferredStore
+  /** @internal */
   public cbInfoStore: CallbackInfoStore
+  /** @internal */
   public handleStore: HandleStore
 
   private readonly _rootScope: HandleScope
+  /** @internal */
   public currentScope: IHandleScope | null
 
   constructor () {
@@ -32,14 +40,17 @@ export class Context {
     this.currentScope = null
   }
 
+  /** @internal */
   getCurrentScope (): IHandleScope | null {
     return this.currentScope
   }
 
+  /** @internal */
   addToCurrentScope<V> (envObject: Env, value: V): Handle<V> {
     return this.currentScope!.add(envObject, value)
   }
 
+  /** @internal */
   openScope<Scope extends HandleScope> (envObject: Env, ScopeConstructor = HandleScope): Scope {
     if (this.currentScope) {
       const scope = ScopeConstructor.create(this, this.currentScope)
@@ -53,6 +64,7 @@ export class Context {
     return this.currentScope as Scope
   }
 
+  /** @internal */
   closeScope (envObject: Env, scope: IHandleScope): void {
     if (scope === this.currentScope) {
       this.currentScope = scope.parent
@@ -72,6 +84,7 @@ export class Context {
     envObject.openHandleScopes--
   }
 
+  /** @internal */
   checkEnv (env: napi_env, fn: (envObject: Env) => napi_status): napi_status {
     if (!env) return napi_status.napi_invalid_arg
     const envObject = this.envStore.get(env)
@@ -79,6 +92,7 @@ export class Context {
     return fn(envObject)
   }
 
+  /** @internal */
   checkArgs (envObject: Env, args: Ptr[], fn: () => napi_status): napi_status {
     for (let i = 0; i < args.length; i++) {
       const arg = args[i]
@@ -89,6 +103,7 @@ export class Context {
     return fn()
   }
 
+  /** @internal */
   preamble (env: napi_env, fn: (envObject: Env) => napi_status): napi_status {
     return this.checkEnv(env, (envObject) => {
       if (envObject.tryCatch.hasCaught()) return envObject.setLastError(napi_status.napi_pending_exception)

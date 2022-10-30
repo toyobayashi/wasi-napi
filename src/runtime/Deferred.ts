@@ -1,11 +1,13 @@
 import type { Env } from './env'
 import type { IStoreValue } from './Store'
 
+/** @internal */
 export interface IDeferrdValue<T = any> {
   resolve: (value: T) => void
   reject: (reason?: any) => void
 }
 
+/** @internal */
 export class Deferred<T = any> implements IStoreValue {
   public static create<T = any> (envObject: Env, value: IDeferrdValue<T>): Deferred {
     const deferred = new Deferred<T>(envObject, value)

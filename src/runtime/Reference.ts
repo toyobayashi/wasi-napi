@@ -4,6 +4,7 @@ import type { Env } from './env'
 import type { Handle } from './Handle'
 import { RefBase } from './RefBase'
 
+/** @internal */
 export class Reference extends RefBase implements IStoreValue {
   public id: number
 

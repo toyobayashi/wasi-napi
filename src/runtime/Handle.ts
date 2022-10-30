@@ -4,6 +4,7 @@ import { IStoreValue, Store } from './Store'
 import type { Env } from './env'
 import { _global, isReferenceType, supportFinalizer } from './util'
 
+/** @internal */
 export class Handle<S> implements IStoreValue {
   public static create<S> (envObject: Env, value: S): Handle<S> {
     const handle = new Handle(envObject, 0, value)
@@ -182,6 +183,7 @@ export class ExternalHandle extends Handle<{}> {
   }
 }
 
+/** @internal */
 export class HandleStore extends Store<Handle<any>> {
   public static ID_UNDEFINED: 1 = 1
   public static ID_NULL: 2 = 2

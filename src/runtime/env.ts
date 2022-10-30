@@ -6,6 +6,7 @@ import { RefTracker } from './RefTracker'
 import { HandleScope } from './HandleScope'
 import { RefBase } from './RefBase'
 
+/** @internal */
 export interface ILastError {
   setErrorMessage: (ptr: number | bigint) => void
   getErrorCode: () => number
@@ -14,6 +15,7 @@ export interface ILastError {
   dispose (): void
 }
 
+/** @internal */
 export class Env implements IStoreValue {
   public id: number
 

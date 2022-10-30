@@ -11,6 +11,7 @@ const kContext = Symbol('kContext')
 const kMemory64 = Symbol('kMemory64')
 const kPointerSize = Symbol('kPointerSize')
 
+/** @public */
 export class NodeAPI {
   public imports: Record<string, any>
   public exports: any
@@ -46,13 +47,13 @@ export class NodeAPI {
     this[kInstance] = instance
     const {
       napi_register_wasm_v1,
-      wapi_get_napi_errors,
+      wapi_error_messages_get,
       malloc,
       free,
       __indirect_function_table
     } = this[kInstance].exports
     if (typeof napi_register_wasm_v1 !== 'function' ||
-        typeof wapi_get_napi_errors !== 'function') {
+        typeof wapi_error_messages_get !== 'function') {
       throw new TypeError('Invalid Node-API wasm')
     }
 
@@ -89,7 +90,7 @@ export class NodeAPI {
       }
     }
 
-    this[kSetMemory](memory, Number(wapi_get_napi_errors()), lastError, malloc, free)
+    this[kSetMemory](memory, Number(wapi_error_messages_get()), lastError, malloc, free)
     const dynCalls = {
       call_vp (ptr: Ptr, a: Ptr): void {
         __indirect_function_table.get(Number(ptr))(toPtr(a, wasm64))
