@@ -230,6 +230,44 @@ export function createFunction<F extends (...args: any[]) => any> (this: IAPI, e
   return { status: napi_status.napi_ok, f }
 }
 
+export function defineProperty (this: IAPI, envObject: Env, obj: object, propertyName: string | symbol, method: napi_callback, getter: napi_callback, setter: napi_callback, value: napi_value, attributes: number, data: void_p): void {
+  const { ctx } = _private.get(this)!
+  if (getter || setter) {
+    let localGetter: () => any
+    let localSetter: (v: any) => void
+    if (getter) {
+      localGetter = createFunction.call(this, envObject, 0, 0, getter, data).f
+    }
+    if (setter) {
+      localSetter = createFunction.call(this, envObject, 0, 0, setter, data).f
+    }
+    const desc: PropertyDescriptor = {
+      configurable: (attributes & napi_property_attributes.napi_configurable) !== 0,
+      enumerable: (attributes & napi_property_attributes.napi_enumerable) !== 0,
+      get: localGetter!,
+      set: localSetter!
+    }
+    Object.defineProperty(obj, propertyName, desc)
+  } else if (method) {
+    const localMethod = createFunction.call(this, envObject, 0, 0, method, data).f
+    const desc: PropertyDescriptor = {
+      configurable: (attributes & napi_property_attributes.napi_configurable) !== 0,
+      enumerable: (attributes & napi_property_attributes.napi_enumerable) !== 0,
+      writable: (attributes & napi_property_attributes.napi_writable) !== 0,
+      value: localMethod
+    }
+    Object.defineProperty(obj, propertyName, desc)
+  } else {
+    const desc: PropertyDescriptor = {
+      configurable: (attributes & napi_property_attributes.napi_configurable) !== 0,
+      enumerable: (attributes & napi_property_attributes.napi_enumerable) !== 0,
+      writable: (attributes & napi_property_attributes.napi_writable) !== 0,
+      value: ctx.handleStore.get(value)!.value
+    }
+    Object.defineProperty(obj, propertyName, desc)
+  }
+}
+
 export function wrap (this: IAPI, type: WrapType, env: napi_env, js_object: napi_value, native_object: void_p, finalize_cb: napi_finalize, finalize_hint: void_p, result: Ptr): napi_status {
   const { ctx, memory, wasm64 } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
@@ -260,6 +298,35 @@ export function wrap (this: IAPI, type: WrapType, env: napi_env, js_object: napi
 
       if (type === WrapType.retrievable) {
         value.wrapped = reference.id
+      }
+      return envObject.getReturnStatus()
+    })
+  })
+}
+
+export function unwrap (this: IAPI, env: napi_env, js_object: napi_value, result: void_pp, action: UnwrapAction): napi_status {
+  const { ctx, wasm64, memory } = _private.get(this)!
+  return ctx.preamble(env, (envObject) => {
+    return ctx.checkArgs(envObject, [js_object], () => {
+      if (action === UnwrapAction.KeepWrap) {
+        if (!result) return envObject.setLastError(napi_status.napi_invalid_arg)
+      }
+      const value = ctx.handleStore.get(js_object)!
+      if (!(value.isObject() || value.isFunction())) {
+        return envObject.setLastError(napi_status.napi_invalid_arg)
+      }
+      const referenceId = value.wrapped
+      const ref = ctx.refStore.get(referenceId)
+      if (!ref) return envObject.setLastError(napi_status.napi_invalid_arg)
+      if (result) {
+        result = Number(result)
+
+        const data = ref.data()
+        setValue(memory.view, result, data, '*', wasm64)
+      }
+      if (action === UnwrapAction.RemoveWrap) {
+        value.wrapped = 0
+        Reference.doDelete(ref)
       }
       return envObject.getReturnStatus()
     })

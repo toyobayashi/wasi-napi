@@ -244,6 +244,105 @@ export function createTypedArray (envObject: Env, Type: { new (...args: any[]): 
   return callback(out)
 }
 
+export function addName (ret: Array<string | number | symbol>, name: string | number | symbol, key_filter: number, conversion_mode: napi_key_conversion): void {
+  if (ret.indexOf(name) !== -1) return
+  if (conversion_mode === napi_key_conversion.napi_key_keep_numbers) {
+    ret.push(name)
+  } else if (conversion_mode === napi_key_conversion.napi_key_numbers_to_strings) {
+    const realName = typeof name === 'number' ? String(name) : name
+    if (typeof realName === 'string') {
+      if (!(key_filter & napi_key_filter.napi_key_skip_strings)) {
+        ret.push(realName)
+      }
+    } else {
+      ret.push(realName)
+    }
+  }
+}
+
+export function getPropertyNames (obj: object, collection_mode: napi_key_collection_mode, key_filter: number, conversion_mode: napi_key_conversion): Array<string | symbol | number> {
+  const props: Array<{ name: string | number | symbol; desc: PropertyDescriptor; own: boolean }> = []
+  let names: string[]
+  let symbols: symbol[]
+  let i: number
+  let own: boolean = true
+  const integerIndiceRegex = /^(0|[1-9][0-9]*)$/
+  do {
+    names = Object.getOwnPropertyNames(obj)
+    symbols = Object.getOwnPropertySymbols(obj)
+    for (i = 0; i < names.length; i++) {
+      props.push({
+        name: integerIndiceRegex.test(names[i]) ? Number(names[i]) : names[i],
+        desc: Object.getOwnPropertyDescriptor(obj, names[i])!,
+        own
+      })
+    }
+    for (i = 0; i < symbols.length; i++) {
+      props.push({
+        name: symbols[i],
+        desc: Object.getOwnPropertyDescriptor(obj, symbols[i])!,
+        own
+      })
+    }
+    if (collection_mode === napi_key_collection_mode.napi_key_own_only) {
+      break
+    }
+    obj = Object.getPrototypeOf(obj)
+    own = false
+  } while (obj)
+  const ret: Array<string | number | symbol> = []
+  for (i = 0; i < props.length; i++) {
+    const prop = props[i]
+    const name = prop.name
+    const desc = prop.desc
+    if (key_filter === napi_key_filter.napi_key_all_properties) {
+      addName(ret, name, key_filter, conversion_mode)
+    } else {
+      if (key_filter & napi_key_filter.napi_key_skip_strings && typeof name === 'string') {
+        continue
+      }
+      if (key_filter & napi_key_filter.napi_key_skip_symbols && typeof name === 'symbol') {
+        continue
+      }
+      let shouldAdd = true
+      switch (key_filter & 7) {
+        case napi_key_filter.napi_key_writable: {
+          shouldAdd = Boolean(desc.writable)
+          break
+        }
+        case napi_key_filter.napi_key_enumerable: {
+          shouldAdd = Boolean(desc.enumerable)
+          break
+        }
+        case (napi_key_filter.napi_key_writable | napi_key_filter.napi_key_enumerable): {
+          shouldAdd = Boolean(desc.writable && desc.enumerable)
+          break
+        }
+        case napi_key_filter.napi_key_configurable: {
+          shouldAdd = Boolean(desc.configurable)
+          break
+        }
+        case (napi_key_filter.napi_key_configurable | napi_key_filter.napi_key_writable): {
+          shouldAdd = Boolean(desc.configurable && desc.writable)
+          break
+        }
+        case (napi_key_filter.napi_key_configurable | napi_key_filter.napi_key_enumerable): {
+          shouldAdd = Boolean(desc.configurable && desc.enumerable)
+          break
+        }
+        case (napi_key_filter.napi_key_configurable | napi_key_filter.napi_key_enumerable | napi_key_filter.napi_key_writable): {
+          shouldAdd = Boolean(desc.configurable && desc.enumerable && desc.writable)
+          break
+        }
+      }
+      if (shouldAdd) {
+        addName(ret, name, key_filter, conversion_mode)
+      }
+    }
+  }
+  return ret
+}
+
 export function abort (message?: string): never {
   throw new WebAssembly.RuntimeError(`Aborted("${message ?? ''}")`)
 }
