@@ -1,7 +1,7 @@
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'
-import type { Handle } from '../../runtime/Handle'
+import { Handle, HandleStore } from '../../runtime/Handle'
 
 function napi_typeof (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
   const { ctx, memory } = _private.get(this)!
@@ -47,9 +47,7 @@ function napi_coerce_to_bool (this: IAPI, env: napi_env, value: napi_value, resu
       const handle = ctx.handleStore.get(value)!
       result = Number(result)
 
-      // @ts-expect-error
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const v = handle.value ? ctx.HandleStore.ID_TRUE : ctx.HandleStore.ID_FALSE
+      const v = handle.value ? HandleStore.ID_TRUE : HandleStore.ID_FALSE
       const view = memory.view
       setValue(view, result, v, '*', wasm64)
       return envObject.getReturnStatus()
