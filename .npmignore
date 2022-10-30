@@ -2,7 +2,7 @@ node_modules
 .eslint*
 api-extractor.json
 tsconfig*
-/src
+/src/**/*.ts
 /scripts
 .vscode
 /temp
@@ -13,3 +13,4 @@ tsconfig*
 tsgo.config.js
 jest.config*
 /lib/esm-bundler
+/*.tgz
