@@ -3,39 +3,62 @@ import type { Context } from '../runtime/Context'
 import { Memory, extendMemory, toPtr, setValue } from './util'
 import type { ILastError } from '../runtime/env'
 
-export const _wasm64 = new WeakMap<IAPI, boolean>()
-export const _memory = new WeakMap<IAPI, Memory>()
-export const _errmsgPtr = new WeakMap<IAPI, number>()
-export const _psize = new WeakMap<IAPI, number>()
-export const _ctx = new WeakMap<IAPI, Context>()
-export const _lastError = new WeakMap<IAPI, ILastError>()
-export const _malloc = new WeakMap<IAPI, (size: number | bigint) => (number | bigint)>()
-export const _free = new WeakMap<IAPI, (ptr: Ptr) => void>()
+export interface IWrap {
+  wasm64: boolean
+  memory: Memory
+  errmsgPtr: number
+  psize: number
+  ctx: Context
+  lastError: ILastError
+  malloc: (size: number | bigint) => (number | bigint)
+  free: (ptr: Ptr) => void
 
-export const _memoryPointerDeleter = new WeakMap<IAPI, FinalizationRegistry<Ptr> | undefined>()
-export const _arrayBufferMemoryMap = new WeakMap<IAPI, WeakMap<ArrayBuffer, void_p>>()
-export const _typedArrayMemoryMap = new WeakMap<IAPI, WeakMap<ArrayBufferView, void_p>>()
+  memoryPointerDeleter: FinalizationRegistry<Ptr> | undefined
+  arrayBufferMemoryMap: WeakMap<ArrayBuffer, void_p>
+  typedArrayMemoryMap: WeakMap<ArrayBufferView, void_p>
+}
+
+export const _private = new WeakMap<IAPI, IWrap>()
 
 export type IAPI = object
 
 export const API: new (ctx: Context, wasm64: boolean) => IAPI =
   function API (this: any, ctx: Context, wasm64: boolean): void {
-    _ctx.set(this, ctx)
-    _wasm64.set(this, wasm64)
-    _psize.set(this, wasm64 ? 8 : 4)
-    _memoryPointerDeleter.set(this, typeof FinalizationRegistry === 'function'
-      ? new FinalizationRegistry((pointer) => { _free.get(this)!(pointer) })
-      : undefined)
-    _arrayBufferMemoryMap.set(this, new WeakMap())
-    _typedArrayMemoryMap.set(this, new WeakMap())
+    const wrap: IWrap = {
+      ctx,
+      wasm64,
+      psize: wasm64 ? 8 : 4,
+      errmsgPtr: 0,
+      lastError: undefined!,
+      malloc: undefined!,
+      free: undefined!,
+      memory: undefined!,
+      memoryPointerDeleter: typeof FinalizationRegistry === 'function'
+        ? new FinalizationRegistry((pointer) => { wrap.free(pointer) })
+        : undefined,
+      arrayBufferMemoryMap: new WeakMap(),
+      typedArrayMemoryMap: new WeakMap()
+    }
 
-    this._setMemory = function _setMemory (this: any, m: WebAssembly.Memory, errmsgPtr: number, lastError: ILastError): void {
+    _private.set(this, wrap)
+
+    this._setMemory = function _setMemory (
+      this: any,
+      m: WebAssembly.Memory,
+      errmsgPtr: number,
+      lastError: ILastError,
+      malloc: (size: number | bigint) => (number | bigint),
+      free: (ptr: Ptr) => void
+    ): void {
       if (!(m instanceof WebAssembly.Memory)) {
         throw new TypeError('"instance.exports.memory" property must be a WebAssembly.Memory')
       }
-      _memory.set(this, extendMemory(m))
-      _errmsgPtr.set(this, errmsgPtr)
-      _lastError.set(this, lastError)
+      const wrap = _private.get(this)!
+      wrap.memory = extendMemory(m)
+      wrap.errmsgPtr = errmsgPtr
+      wrap.lastError = lastError
+      wrap.malloc = malloc
+      wrap.free = free
     }
   } as any
 
@@ -44,9 +67,10 @@ export function implement (name: string, fn: Function): void {
 }
 
 export function getArrayBufferPointer (this: IAPI, arrayBuffer: ArrayBuffer): void_p {
-  const memory = _memory.get(this)!
-  const memoryPointerDeleter = _memoryPointerDeleter.get(this)!
-  const arrayBufferMemoryMap = _arrayBufferMemoryMap.get(this)!
+  const wrap = _private.get(this)!
+  const memory = wrap.memory
+  const memoryPointerDeleter = wrap.memoryPointerDeleter
+  const arrayBufferMemoryMap = wrap.arrayBufferMemoryMap
   if ((!memoryPointerDeleter) || (arrayBuffer === memory.buffer)) {
     return 0
   }
@@ -59,8 +83,8 @@ export function getArrayBufferPointer (this: IAPI, arrayBuffer: ArrayBuffer): vo
     return pointer
   }
 
-  const wasm64 = _wasm64.get(this)!
-  pointer = _malloc.get(this)!(toPtr(arrayBuffer.byteLength, wasm64))
+  const wasm64 = wrap.wasm64
+  pointer = wrap.malloc(toPtr(arrayBuffer.byteLength, wasm64))
   HEAPU8.set(new Uint8Array(arrayBuffer), Number(pointer))
   arrayBufferMemoryMap.set(arrayBuffer, pointer)
   memoryPointerDeleter.register(arrayBuffer, pointer)
@@ -68,9 +92,10 @@ export function getArrayBufferPointer (this: IAPI, arrayBuffer: ArrayBuffer): vo
 }
 
 export function getViewPointer (this: IAPI, view: ArrayBufferView): void_p {
-  const memory = _memory.get(this)!
-  const memoryPointerDeleter = _memoryPointerDeleter.get(this)!
-  const typedArrayMemoryMap = _typedArrayMemoryMap.get(this)!
+  const wrap = _private.get(this)!
+  const memory = wrap.memory
+  const memoryPointerDeleter = wrap.memoryPointerDeleter
+  const typedArrayMemoryMap = wrap.typedArrayMemoryMap
   if (!memoryPointerDeleter) {
     return 0
   }
@@ -86,8 +111,8 @@ export function getViewPointer (this: IAPI, view: ArrayBufferView): void_p {
     return pointer
   }
 
-  const wasm64 = _wasm64.get(this)!
-  pointer = _malloc.get(this)!(toPtr(view.byteLength, wasm64))
+  const wasm64 = wrap.wasm64
+  pointer = wrap.malloc(toPtr(view.byteLength, wasm64))
   HEAPU8.set(new Uint8Array(view.buffer, view.byteOffset, view.byteLength), Number(pointer))
   typedArrayMemoryMap.set(view, pointer)
   memoryPointerDeleter.register(view, pointer)
@@ -95,7 +120,7 @@ export function getViewPointer (this: IAPI, view: ArrayBufferView): void_p {
 }
 
 export function wrap (this: IAPI, type: WrapType, env: napi_env, js_object: napi_value, native_object: void_p, finalize_cb: napi_finalize, finalize_hint: void_p, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory, wasm64 } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [js_object], () => {
       const value = ctx.handleStore.get(js_object)!
@@ -116,8 +141,7 @@ export function wrap (this: IAPI, type: WrapType, env: napi_env, js_object: napi
         if (!finalize_cb) return envObject.setLastError(napi_status.napi_invalid_arg)
         reference = Reference.create(envObject, value.id, 0, false, finalize_cb, native_object, finalize_hint)
         result = Number(result)
-        const view = _memory.get(this)!.view
-        const wasm64 = _wasm64.get(this)!
+        const view = memory.view
         setValue(view, result, reference.id, '*', wasm64)
       } else {
         reference = Reference.create(envObject, value.id, 0, true, finalize_cb, native_object, !finalize_cb ? finalize_cb : finalize_hint)

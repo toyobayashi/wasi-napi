@@ -1,4 +1,4 @@
-import { implement, _ctx, _memory, _wasm64, getArrayBufferPointer, getViewPointer } from '../api'
+import { implement, _private, getArrayBufferPointer, getViewPointer } from '../api'
 import type { IAPI } from '../api'
 import { getValue, setValue, lengthBytesUTF8, stringToUTF8Array, stringToUTF16Array } from '../util'
 import { supportBigInt } from '../../runtime/util'
@@ -6,14 +6,14 @@ import { NotSupportBigIntError } from '../../runtime/errors'
 import type { ExternalHandle } from '../../runtime/Handle'
 
 function napi_get_array_length (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
       if (!handle.isArray()) {
         return envObject.setLastError(napi_status.napi_array_expected)
       }
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, Number(result), handle.value.length >>> 0, 'u32')
       return envObject.clearLastError()
     })
@@ -21,24 +21,23 @@ function napi_get_array_length (this: IAPI, env: napi_env, value: napi_value, re
 }
 
 function napi_get_arraybuffer_info (this: IAPI, env: napi_env, arraybuffer: napi_value, data: void_pp, byte_length: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [arraybuffer], () => {
       const handle = ctx.handleStore.get(arraybuffer)!
       if (!handle.isArrayBuffer()) {
         return envObject.setLastError(napi_status.napi_invalid_arg)
       }
-      const wasm64 = _wasm64.get(this)!
       if (data) {
         data = Number(data)
 
         const p = getArrayBufferPointer.call(this, handle.value)
-        const view = _memory.get(this)!.view
+        const view = memory.view
         setValue(view, data, p, '*', wasm64)
       }
       if (byte_length) {
         byte_length = Number(byte_length)
-        const view = _memory.get(this)!.view
+        const view = memory.view
         setValue(view, byte_length, handle.value.byteLength, '*', wasm64)
       }
       return envObject.clearLastError()
@@ -47,7 +46,7 @@ function napi_get_arraybuffer_info (this: IAPI, env: napi_env, arraybuffer: napi
 }
 
 function napi_get_prototype (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
@@ -64,8 +63,8 @@ function napi_get_prototype (this: IAPI, env: napi_env, value: napi_value, resul
       result = Number(result)
 
       const p = envObject.ensureHandleId(Object.getPrototypeOf(v))
-      const view = _memory.get(this)!.view
-      setValue(view, result, p, '*', _wasm64.get(this)!)
+      const view = memory.view
+      setValue(view, result, p, '*', wasm64)
       return envObject.clearLastError()
     })
   })
@@ -81,7 +80,7 @@ function napi_get_typedarray_info (
   arraybuffer: Ptr,
   byte_offset: Ptr
 ): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [typedarray], () => {
       const handle = ctx.handleStore.get(typedarray)!
@@ -89,7 +88,7 @@ function napi_get_typedarray_info (
         return envObject.setLastError(napi_status.napi_invalid_arg)
       }
       const v = handle.value
-      const view = _memory.get(this)!.view
+      const view = memory.view
       if (type) {
         type = Number(type)
         if (v instanceof Int8Array) {
@@ -116,7 +115,7 @@ function napi_get_typedarray_info (
           setValue(view, type, napi_typedarray_type.napi_biguint64_array, 'i32')
         }
       }
-      const wasm64 = _wasm64.get(this)!
+
       if (length) {
         length = Number(length)
         setValue(view, length, v.length, 'size', wasm64)
@@ -155,7 +154,7 @@ function napi_get_dataview_info (
   arraybuffer: Ptr,
   byte_offset: Ptr
 ): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [dataview], () => {
       const handle = ctx.handleStore.get(dataview)!
@@ -163,8 +162,8 @@ function napi_get_dataview_info (
         return envObject.setLastError(napi_status.napi_invalid_arg)
       }
       const v = handle.value as DataView
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
+
       if (byte_length) {
         byte_length = Number(byte_length)
         setValue(view, byte_length, v.byteLength, 'size', wasm64)
@@ -195,14 +194,14 @@ function napi_get_dataview_info (
 }
 
 function napi_get_date_value (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
       if (!handle.isDate()) {
         return envObject.setLastError(napi_status.napi_invalid_arg)
       }
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, Number(result), (handle.value as Date).valueOf(), 'f64')
       return envObject.getReturnStatus()
     })
@@ -210,14 +209,14 @@ function napi_get_date_value (this: IAPI, env: napi_env, value: napi_value, resu
 }
 
 function napi_get_value_bool (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
       if (typeof handle.value !== 'boolean') {
         return envObject.setLastError(napi_status.napi_boolean_expected)
       }
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, Number(result), handle.value ? 1 : 0, 'u8')
       return envObject.clearLastError()
     })
@@ -225,14 +224,14 @@ function napi_get_value_bool (this: IAPI, env: napi_env, value: napi_value, resu
 }
 
 function napi_get_value_double (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
       if (typeof handle.value !== 'number') {
         return envObject.setLastError(napi_status.napi_number_expected)
       }
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, Number(result), handle.value, 'f64')
       return envObject.clearLastError()
     })
@@ -240,7 +239,7 @@ function napi_get_value_double (this: IAPI, env: napi_env, value: napi_value, re
 }
 
 function napi_get_value_bigint_int64 (this: IAPI, env: napi_env, value: napi_value, result: Ptr, lossless: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     if (!supportBigInt) {
       envObject.tryCatch.setError(new NotSupportBigIntError('napi_get_value_bigint_int64', 'This API is unavailable'))
@@ -254,7 +253,7 @@ function napi_get_value_bigint_int64 (this: IAPI, env: napi_env, value: napi_val
       }
       lossless = Number(lossless)
       result = Number(result)
-      const view = _memory.get(this)!.view
+      const view = memory.view
       if ((numberValue >= (BigInt(-1) * (BigInt(1) << BigInt(63)))) && (numberValue < (BigInt(1) << BigInt(63)))) {
         setValue(view, lossless, 1, 'u8')
       } else {
@@ -274,7 +273,7 @@ function napi_get_value_bigint_int64 (this: IAPI, env: napi_env, value: napi_val
 }
 
 function napi_get_value_bigint_uint64 (this: IAPI, env: napi_env, value: napi_value, result: Ptr, lossless: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     if (!supportBigInt) {
       envObject.tryCatch.setError(new NotSupportBigIntError('napi_get_value_bigint_uint64', 'This API is unavailable'))
@@ -288,7 +287,7 @@ function napi_get_value_bigint_uint64 (this: IAPI, env: napi_env, value: napi_va
       }
       lossless = Number(lossless)
       result = Number(result)
-      const view = _memory.get(this)!.view
+      const view = memory.view
       if ((numberValue >= BigInt(0)) && (numberValue < (BigInt(1) << BigInt(64)))) {
         setValue(view, lossless, 1, 'u8')
       } else {
@@ -312,7 +311,7 @@ function napi_get_value_bigint_words (
   word_count: Ptr,
   words: Ptr
 ): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     if (!supportBigInt) {
       envObject.tryCatch.setError(new NotSupportBigIntError('napi_get_value_bigint_words', 'This API is unavailable'))
@@ -328,8 +327,7 @@ function napi_get_value_bigint_words (
       sign_bit = Number(sign_bit)
       words = Number(words)
       word_count = Number(word_count)
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
 
       let word_count_int = getValue(view, word_count, 'size', wasm64)
       word_count_int = Number(word_count_int)
@@ -369,7 +367,7 @@ function napi_get_value_bigint_words (
 }
 
 function napi_get_value_external (this: IAPI, env: napi_env, value: napi_value, result: void_pp): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
@@ -378,8 +376,8 @@ function napi_get_value_external (this: IAPI, env: napi_env, value: napi_value, 
       }
 
       const p = (handle as ExternalHandle).data()
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
+
       setValue(view, Number(result), p, '*', wasm64)
       return envObject.clearLastError()
     })
@@ -387,14 +385,14 @@ function napi_get_value_external (this: IAPI, env: napi_env, value: napi_value, 
 }
 
 function napi_get_value_int32 (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
       if (typeof handle.value !== 'number') {
         return envObject.setLastError(napi_status.napi_number_expected)
       }
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, Number(result), handle.value, 'i32')
       return envObject.clearLastError()
     })
@@ -402,7 +400,7 @@ function napi_get_value_int32 (this: IAPI, env: napi_env, value: napi_value, res
 }
 
 function napi_get_value_int64 (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
@@ -411,7 +409,7 @@ function napi_get_value_int64 (this: IAPI, env: napi_env, value: napi_value, res
       }
       const numberValue = handle.value
       result = Number(result)
-      const view = _memory.get(this)!.view
+      const view = memory.view
       if (numberValue === Number.POSITIVE_INFINITY || numberValue === Number.NEGATIVE_INFINITY || isNaN(numberValue)) {
         setValue(view, result, 0, 'i32')
         setValue(view, result + 4, 0, 'i32')
@@ -433,7 +431,7 @@ function napi_get_value_int64 (this: IAPI, env: napi_env, value: napi_value, res
 }
 
 function napi_get_value_string_latin1 (this: IAPI, env: napi_env, value: napi_value, buf: char_p, buf_size: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value], () => {
       result = Number(result)
@@ -445,8 +443,8 @@ function napi_get_value_string_latin1 (this: IAPI, env: napi_env, value: napi_va
       if (typeof handle.value !== 'string') {
         return envObject.setLastError(napi_status.napi_string_expected)
       }
-      const { view, HEAPU8 } = _memory.get(this)!
-      const wasm64 = _wasm64.get(this)!
+      const { view, HEAPU8 } = memory
+
       if (!buf) {
         if (!result) return envObject.setLastError(napi_status.napi_invalid_arg)
         setValue(view, result, handle.value.length, 'size', wasm64)
@@ -469,7 +467,7 @@ function napi_get_value_string_latin1 (this: IAPI, env: napi_env, value: napi_va
 }
 
 function napi_get_value_string_utf8 (this: IAPI, env: napi_env, value: napi_value, buf: char_p, buf_size: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value], () => {
       result = Number(result)
@@ -481,8 +479,8 @@ function napi_get_value_string_utf8 (this: IAPI, env: napi_env, value: napi_valu
       if (typeof handle.value !== 'string') {
         return envObject.setLastError(napi_status.napi_string_expected)
       }
-      const { view, HEAPU8 } = _memory.get(this)!
-      const wasm64 = _wasm64.get(this)!
+      const { view, HEAPU8 } = memory
+
       if (!buf) {
         if (!result) return envObject.setLastError(napi_status.napi_invalid_arg)
         const strLength = lengthBytesUTF8(handle.value)
@@ -501,7 +499,7 @@ function napi_get_value_string_utf8 (this: IAPI, env: napi_env, value: napi_valu
 }
 
 function napi_get_value_string_utf16 (this: IAPI, env: napi_env, value: napi_value, buf: char16_t_p, buf_size: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value], () => {
       result = Number(result)
@@ -513,8 +511,8 @@ function napi_get_value_string_utf16 (this: IAPI, env: napi_env, value: napi_val
       if (typeof handle.value !== 'string') {
         return envObject.setLastError(napi_status.napi_string_expected)
       }
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
+
       if (!buf) {
         if (!result) return envObject.setLastError(napi_status.napi_invalid_arg)
         setValue(view, result, handle.value.length, 'size', wasm64)
@@ -532,14 +530,14 @@ function napi_get_value_string_utf16 (this: IAPI, env: napi_env, value: napi_val
 }
 
 function napi_get_value_uint32 (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [value, result], () => {
       const handle = ctx.handleStore.get(value)!
       if (typeof handle.value !== 'number') {
         return envObject.setLastError(napi_status.napi_number_expected)
       }
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, Number(result), handle.value, 'u32')
       return envObject.clearLastError()
     })

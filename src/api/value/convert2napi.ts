@@ -1,16 +1,15 @@
-import { implement, _ctx, _memory, _wasm64 } from '../api'
+import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue, UTF16ToString, UTF8ToString } from '../util'
 import { supportBigInt } from '../../runtime/util'
 import { NotSupportBigIntError } from '../../runtime/errors'
 
 function napi_create_int32 (this: IAPI, env: napi_env, value: int32_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       result = Number(result)
-      const wasm64 = _wasm64.get(this)!
-      const view = _memory.get(this)!.view
+      const view = memory.view
 
       const v = ctx.addToCurrentScope(envObject, value).id
       setValue(view, result, v, '*', wasm64)
@@ -20,12 +19,11 @@ function napi_create_int32 (this: IAPI, env: napi_env, value: int32_t, result: P
 }
 
 function napi_create_uint32 (this: IAPI, env: napi_env, value: uint32_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       result = Number(result)
-      const wasm64 = _wasm64.get(this)!
-      const view = _memory.get(this)!.view
+      const view = memory.view
 
       const v = ctx.addToCurrentScope(envObject, value >>> 0).id
       setValue(view, result, v, '*', wasm64)
@@ -35,15 +33,13 @@ function napi_create_uint32 (this: IAPI, env: napi_env, value: uint32_t, result:
 }
 
 function napi_create_int64 (this: IAPI, env: napi_env, low: int32_t, high: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
-    const checkList = [high]
-    return ctx.checkArgs(envObject, checkList, () => {
+    return ctx.checkArgs(envObject, [high], () => {
       const value = Number(low)
       const v1 = ctx.addToCurrentScope(envObject, value).id
       high = Number(high)
-      const wasm64 = _wasm64.get(this)!
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, high, v1, '*', wasm64)
 
       return envObject.clearLastError()
@@ -52,13 +48,12 @@ function napi_create_int64 (this: IAPI, env: napi_env, low: int32_t, high: Ptr):
 }
 
 function napi_create_double (this: IAPI, env: napi_env, value: double, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       result = Number(result)
       const v = ctx.addToCurrentScope(envObject, value).id
-      const wasm64 = _wasm64.get(this)!
-      const view = _memory.get(this)!.view
+      const view = memory.view
       setValue(view, result, v, '*', wasm64)
       return envObject.clearLastError()
     })
@@ -66,7 +61,7 @@ function napi_create_double (this: IAPI, env: napi_env, value: double, result: P
 }
 
 function napi_create_string_latin1 (this: IAPI, env: napi_env, str: const_char_p, length: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       str = Number(str)
@@ -75,8 +70,7 @@ function napi_create_string_latin1 (this: IAPI, env: napi_env, str: const_char_p
       if (!((length === 0xffffffff) || (length <= 2147483647)) || (!str)) {
         return envObject.setLastError(napi_status.napi_invalid_arg)
       }
-      const wasm64 = _wasm64.get(this)!
-      const { view, HEAPU8 } = _memory.get(this)!
+      const { view, HEAPU8 } = memory
 
       let latin1String = ''
       let len = 0
@@ -106,7 +100,7 @@ function napi_create_string_latin1 (this: IAPI, env: napi_env, str: const_char_p
 }
 
 function napi_create_string_utf16 (this: IAPI, env: napi_env, str: const_char16_t_p, length: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       str = Number(str)
@@ -117,8 +111,7 @@ function napi_create_string_utf16 (this: IAPI, env: napi_env, str: const_char16_
         return envObject.setLastError(napi_status.napi_invalid_arg)
       }
 
-      const wasm64 = _wasm64.get(this)!
-      const { view } = _memory.get(this)!
+      const { view } = memory
 
       const utf16String = length === -1 ? UTF16ToString(view, str) : UTF16ToString(view, str, length * 2)
       result = Number(result)
@@ -131,7 +124,7 @@ function napi_create_string_utf16 (this: IAPI, env: napi_env, str: const_char16_
 }
 
 function napi_create_string_utf8 (this: IAPI, env: napi_env, str: const_char_p, length: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       str = Number(str)
@@ -141,8 +134,8 @@ function napi_create_string_utf8 (this: IAPI, env: napi_env, str: const_char_p, 
       if (!((length === 0xffffffff) || (length <= 2147483647)) || (!str)) {
         return envObject.setLastError(napi_status.napi_invalid_arg)
       }
-      const wasm64 = _wasm64.get(this)!
-      const { view, HEAPU8 } = _memory.get(this)!
+
+      const { view, HEAPU8 } = memory
       const utf8String = length === -1 ? UTF8ToString(HEAPU8, str) : UTF8ToString(HEAPU8, str, length)
       result = Number(result)
 
@@ -154,20 +147,19 @@ function napi_create_string_utf8 (this: IAPI, env: napi_env, str: const_char_p, 
 }
 
 function napi_create_bigint_int64 (this: IAPI, env: napi_env, low: int32_t, high: int32_t): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     if (!supportBigInt) {
       envObject.tryCatch.setError(new NotSupportBigIntError('napi_create_bigint_int64', 'This API is unavailable'))
       return envObject.setLastError(napi_status.napi_pending_exception)
     }
-    const checkList = [high]
-    return ctx.checkArgs(envObject, checkList, () => {
+    return ctx.checkArgs(envObject, [high], () => {
       const value = low as unknown as BigInt
 
       const v1 = ctx.addToCurrentScope(envObject, value).id
       high = Number(high)
-      const wasm64 = _wasm64.get(this)!
-      const view = _memory.get(this)!.view
+
+      const view = memory.view
       setValue(view, high, v1, '*', wasm64)
       return envObject.clearLastError()
     })
@@ -175,19 +167,18 @@ function napi_create_bigint_int64 (this: IAPI, env: napi_env, low: int32_t, high
 }
 
 function napi_create_bigint_uint64 (this: IAPI, env: napi_env, low: int32_t, high: int32_t): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     if (!supportBigInt) {
       envObject.tryCatch.setError(new NotSupportBigIntError('napi_create_bigint_uint64', 'This API is unavailable'))
       return envObject.setLastError(napi_status.napi_pending_exception)
     }
-    const checkList = [high]
-    return ctx.checkArgs(envObject, checkList, () => {
+    return ctx.checkArgs(envObject, [high], () => {
       const value = low as unknown as BigInt
       const v1 = ctx.addToCurrentScope(envObject, value).id
       high = Number(high)
-      const wasm64 = _wasm64.get(this)!
-      const view = _memory.get(this)!.view
+
+      const view = memory.view
       setValue(view, high, v1, '*', wasm64)
       return envObject.clearLastError()
     })
@@ -195,7 +186,7 @@ function napi_create_bigint_uint64 (this: IAPI, env: napi_env, low: int32_t, hig
 }
 
 function napi_create_bigint_words (this: IAPI, env: napi_env, sign_bit: int, word_count: size_t, words: Ptr, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     if (!supportBigInt) {
       throw new NotSupportBigIntError('napi_create_bigint_words', 'This API is unavailable')
@@ -210,7 +201,7 @@ function napi_create_bigint_words (this: IAPI, env: napi_env, sign_bit: int, wor
       if (word_count > (1024 * 1024 / (4 * 8) / 2)) {
         throw new RangeError('Maximum BigInt size exceeded')
       }
-      const { view, HEAPU32 } = _memory.get(this)!
+      const { view, HEAPU32 } = memory
       let value: bigint = BigInt(0)
       for (let i = 0; i < word_count; i++) {
         const low = HEAPU32[(words + (i * 8)) >> 2]
@@ -222,7 +213,7 @@ function napi_create_bigint_words (this: IAPI, env: napi_env, sign_bit: int, wor
       result = Number(result)
 
       const v = ctx.addToCurrentScope(envObject, value).id
-      const wasm64 = _wasm64.get(this)!
+
       setValue(view, result, v, '*', wasm64)
       return envObject.clearLastError()
     })

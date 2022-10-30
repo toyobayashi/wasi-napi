@@ -1,4 +1,4 @@
-import { implement, wrap, _ctx, _memory, _wasm64 } from '../api'
+import { implement, wrap, _private } from '../api'
 import type { IAPI } from '../api'
 import { createTypedArray, setValue, UTF8ToString } from '../util'
 import { supportFinalizer } from '../../runtime/util'
@@ -7,12 +7,11 @@ import { ExternalHandle } from '../../runtime/Handle'
 import { Reference } from '../../runtime/Reference'
 
 function napi_create_array (this: IAPI, env: napi_env, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       result = Number(result)
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
 
       const value = ctx.addToCurrentScope(envObject, []).id
       setValue(view, result, value, '*', wasm64)
@@ -22,14 +21,13 @@ function napi_create_array (this: IAPI, env: napi_env, result: Ptr): napi_status
 }
 
 function napi_create_array_with_length (this: IAPI, env: napi_env, length: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       length = Number(length)
       result = Number(result)
       length = length >>> 0
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
 
       const value = ctx.addToCurrentScope(envObject, new Array(length)).id
       setValue(view, result, value, '*', wasm64)
@@ -39,14 +37,13 @@ function napi_create_array_with_length (this: IAPI, env: napi_env, length: size_
 }
 
 function napi_create_arraybuffer (this: IAPI, env: napi_env, byte_length: size_t, _data: void_pp, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       byte_length = Number(byte_length)
       result = Number(result)
       byte_length = byte_length >>> 0
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
 
       const value = ctx.addToCurrentScope(envObject, new ArrayBuffer(byte_length)).id
       setValue(view, result, value, '*', wasm64)
@@ -56,13 +53,12 @@ function napi_create_arraybuffer (this: IAPI, env: napi_env, byte_length: size_t
 }
 
 function napi_create_date (this: IAPI, env: napi_env, time: double, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       result = Number(result)
 
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
       const value = ctx.addToCurrentScope(envObject, new Date(time)).id
       setValue(view, result, value, '*', wasm64)
       return envObject.getReturnStatus()
@@ -71,7 +67,7 @@ function napi_create_date (this: IAPI, env: napi_env, time: double, result: Ptr)
 }
 
 function napi_create_external (this: IAPI, env: napi_env, data: void_p, finalize_cb: napi_finalize, finalize_hint: void_p, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       if (!supportFinalizer && finalize_cb) {
@@ -83,8 +79,7 @@ function napi_create_external (this: IAPI, env: napi_env, data: void_p, finalize
         Reference.create(envObject, externalHandle.id, 0, true, finalize_cb, data, finalize_hint)
       }
       result = Number(result)
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
       setValue(view, result, externalHandle.id, '*', wasm64)
       return envObject.clearLastError()
     })
@@ -103,12 +98,11 @@ function napi_create_external (this: IAPI, env: napi_env, data: void_p, finalize
 } */
 
 function napi_create_object (this: IAPI, env: napi_env, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       result = Number(result)
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
       const value = ctx.addToCurrentScope(envObject, {}).id
       setValue(view, result, value, '*', wasm64)
       return envObject.clearLastError()
@@ -117,12 +111,11 @@ function napi_create_object (this: IAPI, env: napi_env, result: Ptr): napi_statu
 }
 
 function napi_create_symbol (this: IAPI, env: napi_env, description: napi_value, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       result = Number(result)
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
       if (!description) {
         // eslint-disable-next-line symbol-description
         const value = ctx.addToCurrentScope(envObject, Symbol()).id
@@ -149,7 +142,7 @@ function napi_create_typedarray (
   byte_offset: size_t,
   result: Ptr
 ): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [arraybuffer, result], () => {
       const handle = ctx.handleStore.get(arraybuffer)!
@@ -161,8 +154,7 @@ function napi_create_typedarray (
       const retCallback = (out: ArrayBufferView): napi_status => {
         result = Number(result)
 
-        const view = _memory.get(this)!.view
-        const wasm64 = _wasm64.get(this)!
+        const view = memory.view
         const value = ctx.addToCurrentScope(envObject, out).id
         setValue(view, result, value, '*', wasm64)
         return envObject.getReturnStatus()
@@ -205,7 +197,7 @@ function napi_create_dataview (
   byte_offset: size_t,
   result: Ptr
 ): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [arraybuffer, result], () => {
       byte_length = Number(byte_length)
@@ -227,8 +219,7 @@ function napi_create_dataview (
 
       const dataview = new DataView(buffer, byte_offset, byte_length)
       result = Number(result)
-      const view = _memory.get(this)!.view
-      const wasm64 = _wasm64.get(this)!
+      const view = memory.view
 
       const value = ctx.addToCurrentScope(envObject, dataview).id
       setValue(view, result, value, '*', wasm64)
@@ -238,14 +229,13 @@ function napi_create_dataview (
 }
 
 function node_api_symbol_for (this: IAPI, env: napi_env, utf8description: const_char_p, length: size_t, result: Ptr): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.checkEnv(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       length = Number(length)
       utf8description = Number(utf8description)
       result = Number(result)
-      const { view, HEAPU8 } = _memory.get(this)!
-      const wasm64 = _wasm64.get(this)!
+      const { view, HEAPU8 } = memory
 
       const descriptionString = length === -1 ? UTF8ToString(HEAPU8, utf8description) : UTF8ToString(HEAPU8, utf8description, length)
 
@@ -265,7 +255,7 @@ function wapi_create_external_uint8array (
   finalize_hint: void_p,
   result: Ptr
 ): napi_status {
-  const ctx = _ctx.get(this)!
+  const { ctx, wasm64, memory } = _private.get(this)!
   return ctx.preamble(env, (envObject) => {
     return ctx.checkArgs(envObject, [result], () => {
       byte_length = Number(byte_length)
@@ -281,8 +271,7 @@ function wapi_create_external_uint8array (
       if (byte_length > 2147483647) {
         throw new RangeError('Cannot create a Uint8Array larger than 2147483647 bytes')
       }
-      const { view, HEAPU8 } = _memory.get(this)!
-      const wasm64 = _wasm64.get(this)!
+      const { view, HEAPU8 } = memory
       if ((external_data + byte_length) > HEAPU8.buffer.byteLength) {
         throw new RangeError('Memory out of range')
       }
