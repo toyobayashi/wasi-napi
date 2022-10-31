@@ -14,3 +14,4 @@ tsgo.config.js
 jest.config*
 /lib/esm-bundler
 /*.tgz
+.gitattributes
