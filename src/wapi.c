@@ -31,11 +31,11 @@
 
 EXTERN_C_START
 
-extern napi_status napi_set_last_error(napi_env env,
+NAPI_EXTERN napi_status napi_set_last_error(napi_env env,
                                        napi_status error_code,
                                        uint32_t engine_error_code,
                                        void* engine_reserved);
-extern napi_status napi_clear_last_error(napi_env env);
+NAPI_EXTERN napi_status napi_clear_last_error(napi_env env);
 
 const char* error_messages[] = {
   NULL,
