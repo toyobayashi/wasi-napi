@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "wapi.h"
 #include "node_api.h"
 
@@ -19,15 +17,6 @@
 
 #define CHECK_ARG(env, arg) \
   RETURN_STATUS_IF_FALSE((env), ((arg) != NULL), napi_invalid_arg)
-
-#define CHECK(expr)                                                           \
-  do {                                                                        \
-    if (!(expr)) {                                                            \
-      abort();                                                                \
-    }                                                                         \
-  } while (0)
-
-#define CHECK_NOT_NULL(val) CHECK((val) != NULL)
 
 EXTERN_C_START
 

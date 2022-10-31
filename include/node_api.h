@@ -1,7 +1,6 @@
 #ifndef SRC_NODE_API_H_
 #define SRC_NODE_API_H_
 
-#include <stdlib.h>
 #include "js_native_api.h"
 #include "node_api_types.h"
 
