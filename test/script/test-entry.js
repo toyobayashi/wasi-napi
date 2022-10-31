@@ -8,7 +8,7 @@ const promise = require(path.join(cwd, process.argv[2]))
 
 promise.then(() => {
   console.log(chalk.greenBright(`✔  ${process.argv[2]} ${(Date.now() - start) / 1000}s`))
-  process.exit(0)
+  // process.exit(0)
 }).catch(err => {
   console.error(err)
   console.error(chalk.redBright(`❌ ${process.argv[2]} ${(Date.now() - start) / 1000}s`))

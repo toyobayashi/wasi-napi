@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Program",
+      "runtimeArgs": ["--expose-gc", "--no-warnings", "--experimental-wasi-unstable-preview1"],
+      "program": "${workspaceFolder}/test/error/error.test.js",
+      "args": []
+    }
+  ]
+}
