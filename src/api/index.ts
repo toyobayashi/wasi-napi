@@ -1,28 +1,44 @@
-import type { Context } from '../runtime/Context'
+import type { IContext } from '../runtime/Context'
+import { Context } from '../runtime/Context'
 import { Env, ILastError } from '../runtime/env'
 import { HandleScope } from '../runtime/HandleScope'
 import { API } from './implement'
 import { getValue, setValue, toPtr } from './util'
 
+/** @internal */
 const kSetMemory = Symbol('kSetMemory')
+/** @internal */
 const kRegistered = Symbol('kRegistered')
+/** @internal */
 const kInstance = Symbol('kInstance')
+/** @internal */
 const kContext = Symbol('kContext')
+/** @internal */
 const kMemory64 = Symbol('kMemory64')
+/** @internal */
 const kPointerSize = Symbol('kPointerSize')
 
 /** @public */
-export class NodeAPI {
+export class NAPI {
   public imports: Record<string, any>
   public exports: any
+  /** @internal */
   private [kSetMemory]: Function
+  /** @internal */
   private [kRegistered]: boolean
+  /** @internal */
   private [kInstance]: WebAssembly.Instance | undefined
+  /** @internal */
   private [kContext]: Context
+  /** @internal */
   private [kMemory64]: boolean
+  /** @internal */
   private [kPointerSize]: number
 
-  constructor (ctx: Context, wasm64?: boolean) {
+  constructor (ctx: IContext, wasm64?: boolean) {
+    if (!(ctx instanceof Context)) {
+      throw new TypeError('Invalid context')
+    }
     wasm64 = Boolean(wasm64)
     this[kMemory64] = wasm64
     this[kPointerSize] = wasm64 ? 8 : 4

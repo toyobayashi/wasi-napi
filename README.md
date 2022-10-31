@@ -1,1 +1,1 @@
-# @tybys/wasm-node-api
+# @tybys/wasi-napi

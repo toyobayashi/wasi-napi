@@ -62,17 +62,6 @@ export class TryCatch {
   }
 }
 
-/* export function gc (): void {
-  envStore.forEach(envObject => {
-    envObject.handleStore.forEach(h => {
-      h.tryDispose()
-    })
-  })
-  if (typeof (_global as any).gc === 'function') {
-    (_global as any).gc()
-  }
-} */
-
 export let canSetFunctionName = false
 try {
   canSetFunctionName = !!Object.getOwnPropertyDescriptor(Function.prototype, 'name')?.configurable

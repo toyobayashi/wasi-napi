@@ -2,5 +2,6 @@
  * @packageDocumentation
  */
 
-export { Context } from './runtime/Context'
-export { NodeAPI } from './api/index'
+export type { IContext } from './runtime/Context'
+export { createContext } from './runtime/Context'
+export { NAPI } from './api/index'

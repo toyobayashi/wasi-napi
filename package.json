@@ -1,16 +1,16 @@
 {
-  "name": "@tybys/wasm-node-api",
+  "name": "@tybys/wasi-napi",
   "version": "1.0.0",
   "description": "",
   "main": "./lib/cjs/index.js",
-  "module": "./dist/wasm-node-api.esm-bundler.js",
-  "types": "./dist/wasm-node-api.d.ts",
+  "module": "./dist/wasi-napi.esm-bundler.js",
+  "types": "./dist/wasi-napi.d.ts",
   "exports": {
     ".": {
-      "module": "./dist/wasm-node-api.esm-bundler.js",
+      "module": "./dist/wasi-napi.esm-bundler.js",
       "import": "./lib/mjs/index.mjs",
       "require": "./lib/cjs/index.js",
-      "types": "./dist/wasm-node-api.d.ts"
+      "types": "./dist/wasi-napi.d.ts"
     }
   },
   "scripts": {

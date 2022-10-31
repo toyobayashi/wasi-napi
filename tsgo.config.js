@@ -34,6 +34,7 @@ function createModuleSpecifierTransformer (suffix) {
 const root = __dirname
 const name = path.posix.basename(require('./package.json').name)
 const entry = path.resolve(root, 'lib/esm-bundler/index.js')
+const entryESM = path.resolve(root, 'lib/mjs/index.mjs')
 const dist = path.resolve(root, 'dist')
 // const mpDist = path.resolve(root, require('./package.json').miniprogram || 'miniprogram_dist')
 
@@ -62,7 +63,8 @@ module.exports = defineConfig({
         target: typescript.ScriptTarget.ES2019,
         module: typescript.ModuleKind.CommonJS,
         sourceMap: true, // for test
-        outDir: path.join(root, 'lib/cjs')
+        outDir: path.join(root, 'lib/cjs'),
+        removeComments: true
       },
       customTransformersAfter: () => ({
         after: [transformPureClass]
@@ -74,7 +76,8 @@ module.exports = defineConfig({
       optionsToExtend: {
         target: typescript.ScriptTarget.ES2019,
         module: typescript.ModuleKind.ESNext,
-        outDir: path.join(root, 'lib/mjs')
+        outDir: path.join(root, 'lib/mjs'),
+        removeComments: true
       },
       customTransformersAfter: () => ({
         after: [
@@ -107,7 +110,7 @@ module.exports = defineConfig({
       strict: false
     },
     {
-      entry,
+      entry: entryESM,
       output: {
         name,
         path: dist
@@ -116,7 +119,7 @@ module.exports = defineConfig({
       type: 'esm'
     },
     {
-      entry,
+      entry: entryESM,
       output: {
         name,
         path: dist

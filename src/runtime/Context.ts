@@ -10,22 +10,17 @@ import type { IHandleScope } from './HandleScope'
 import type { Env } from './env'
 
 /** @public */
-export class Context {
-  /** @internal */
-  public envStore: EnvStore
-  /** @internal */
-  public scopeStore: ScopeStore
-  /** @internal */
-  public refStore: RefStore
-  /** @internal */
-  public deferredStore: DeferredStore
-  /** @internal */
-  public cbInfoStore: CallbackInfoStore
-  /** @internal */
-  public handleStore: HandleStore
+export type IContext = object
 
+/** @internal */
+export class Context {
+  public envStore: EnvStore
+  public scopeStore: ScopeStore
+  public refStore: RefStore
+  public deferredStore: DeferredStore
+  public cbInfoStore: CallbackInfoStore
+  public handleStore: HandleStore
   private readonly _rootScope: HandleScope
-  /** @internal */
   public currentScope: IHandleScope | null
 
   constructor () {
@@ -116,4 +111,9 @@ export class Context {
       }
     })
   }
+}
+
+/** @public */
+export function createContext (): IContext {
+  return new Context()
 }
