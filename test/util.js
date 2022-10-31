@@ -18,7 +18,7 @@ async function loadPath (request) {
     wasi_snapshot_preview1: wasi.wasiImport
   })
   wasi.initialize(instance)
-  api.register(instance.exports.memory, instance)
+  api.register(instance)
   return api.exports
 }
 

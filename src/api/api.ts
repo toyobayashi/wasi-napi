@@ -1,7 +1,7 @@
 import { Reference } from '../runtime/Reference'
 import type { Context } from '../runtime/Context'
 import { Memory, extendMemory, toPtr, setValue, UTF8ToString } from './util'
-import type { Env, ILastError } from '../runtime/env'
+import type { Env } from '../runtime/env'
 import { CallbackInfo } from '../runtime/CallbackInfo'
 import { HandleScope } from '../runtime/HandleScope'
 import { canSetFunctionName, supportBigInt, supportFinalizer, supportNewFunction } from '../runtime/util'
@@ -12,7 +12,6 @@ export interface IWrap {
   errmsgPtr: number
   psize: number
   ctx: Context
-  lastError: ILastError
   malloc: (size: number | bigint) => (number | bigint)
   free: (ptr: Ptr) => void
 
@@ -32,7 +31,6 @@ export const API: new (ctx: Context, wasm64: boolean) => IAPI =
       wasm64,
       psize: wasm64 ? 8 : 4,
       errmsgPtr: 0,
-      lastError: undefined!,
       malloc: undefined!,
       free: undefined!,
       memory: undefined!,
@@ -49,7 +47,6 @@ export const API: new (ctx: Context, wasm64: boolean) => IAPI =
       this: any,
       m: WebAssembly.Memory,
       errmsgPtr: number,
-      lastError: ILastError,
       malloc: (size: number | bigint) => (number | bigint),
       free: (ptr: Ptr) => void
     ): void {
@@ -59,7 +56,6 @@ export const API: new (ctx: Context, wasm64: boolean) => IAPI =
       const wrap = _private.get(this)!
       wrap.memory = extendMemory(m)
       wrap.errmsgPtr = errmsgPtr
-      wrap.lastError = lastError
       wrap.malloc = malloc
       wrap.free = free
     }
