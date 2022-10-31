@@ -4,7 +4,7 @@
       "${default}",
       "${workspaceFolder}/include"
     ],
-    "defines": []
+    "defines": ["NAPI_VERSION=8"]
   },
   "configurations": [
     {
