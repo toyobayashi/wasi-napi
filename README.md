@@ -142,7 +142,7 @@ const wasi = new wasmUtil.WASI({
 })
 const binding = new wasiNapi.NAPI(wasiNapiContext)
 
-const buffer = await (await fetch('./hello.wasm')).arraybuffer()
+const buffer = await (await fetch('./hello.wasm')).arrayBuffer()
 const { instance } = await WebAssembly.instantiate(buffer, {
   wasi_snapshot_preview1: wasi.wasiImport,
   napi: binding.imports
@@ -171,7 +171,7 @@ const wasi = new WASI({
   args: process.argv,
   env: process.env
 })
-const binding = new wasiNapi.NAPI(wasiNapiContext)
+const binding = new NAPI(wasiNapiContext)
 
 const buffer = fs.readFileSync('./hello.wasm')
 
@@ -220,8 +220,8 @@ wasi-sdk does not support C++ exception, so predefine `-DNAPI_DISABLE_CPP_EXCEPT
 clang++ --target=wasm32-wasi \
         -O3 \
         -I./node_modules/@tybys/wasi-napi/include \
-        -DNAPI_DISABLE_CPP_EXCEPTIONS
-        -DNODE_ADDON_API_ENABLE_MAYBE
+        -DNAPI_DISABLE_CPP_EXCEPTIONS \
+        -DNODE_ADDON_API_ENABLE_MAYBE \
         -mexec-model=reactor \
         -Wl,--initial-memory=16777216 \
         -Wl,--export-dynamic \
@@ -287,9 +287,6 @@ mkdir build
 cmake -DCMAKE_TOOLCHAIN_FILE=$WASI_SDK_PATH/share/cmake/wasi-sdk.cmake \
       -DWASI_SDK_PREFIX=$WASI_SDK_PATH \
       -DCMAKE_BUILD_TYPE=Release -H. -Bbuild
-
-# Windows
-# cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" -H. -Bbuild
 
 cmake --build build
 ```
