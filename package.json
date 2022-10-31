@@ -20,7 +20,21 @@
     "lint": "eslint ./src/**/*.{ts,js} --fix",
     "prepare": "npm run build"
   },
-  "keywords": [],
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "wasi",
+    "napi",
+    "node-api",
+    "wasi-sdk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toyobayashi/wasi-napi.git"
+  },
   "author": "toyobayashi",
   "license": "MIT",
   "devDependencies": {
