@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.13.0)
 
 project(wapitest)
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/.." "wapi")
+add_subdirectory("${CMAKE_SOURCE_DIR}/.." "wasinapi")
 add_library(common STATIC "common.c")
-target_link_libraries(common wapi)
+target_link_libraries(common wasinapi)
 
 add_subdirectory("arg")
 add_subdirectory("array")

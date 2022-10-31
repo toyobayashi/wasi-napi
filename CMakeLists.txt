@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(wapi)
+project(wasinapi)
 
 option(WAPI_INSTALL_SRC "WAPI_INSTALL_SRC" OFF)
 
 set(WAPI_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/wapi.c")
 set(WAPI_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-add_library(wapi STATIC ${WAPI_SRC})
-target_include_directories(wapi PUBLIC ${WAPI_INCLUDE})
+add_library(wasinapi STATIC ${WAPI_SRC})
+target_include_directories(wasinapi PUBLIC ${WAPI_INCLUDE})
 
-install(TARGETS wapi DESTINATION "lib/${PROJECT_NAME}")
-install(TARGETS wapi DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
+install(TARGETS wasinapi DESTINATION "lib/${PROJECT_NAME}")
+install(TARGETS wasinapi DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/common.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/wapi.h
