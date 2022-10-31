@@ -1,6 +1,6 @@
 {
   "name": "@tybys/wasi-napi",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "./lib/cjs/index.js",
   "module": "./dist/wasi-napi.esm-bundler.js",
