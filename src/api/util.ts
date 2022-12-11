@@ -1,4 +1,4 @@
-import type { Env } from '../runtime/env'
+import { Env, napi_key_collection_mode, napi_key_conversion, napi_key_filter, napi_status, Ptr, size_t } from '@tybys/emnapi-runtime'
 
 export function toPtr (p: Ptr, wasm64: true): bigint
 export function toPtr (p: Ptr, wasm64: false): number

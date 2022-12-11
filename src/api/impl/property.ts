@@ -1,7 +1,20 @@
+import {
+  type napi_env,
+  type napi_value,
+  napi_key_collection_mode,
+  napi_key_filter,
+  napi_key_conversion,
+  type Ptr,
+  napi_status,
+  supportReflect,
+  type const_char_p,
+  type uint32_t,
+  type size_t,
+  type Const
+} from '@tybys/emnapi-runtime'
 import { defineProperty, implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { getPropertyNames, getValue, setValue, UTF8ToString } from '../util'
-import { supportReflect } from '../../runtime/util'
 
 function napi_get_all_property_names (
   this: IAPI, env: napi_env,

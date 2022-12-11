@@ -1,7 +1,5 @@
-import type { IContext } from '../runtime/Context'
-import { Context } from '../runtime/Context'
-import { Env, ILastError } from '../runtime/env'
-import { HandleScope } from '../runtime/HandleScope'
+import type { ILastError, napi_status, Ptr } from '@tybys/emnapi-runtime'
+import { Context, HandleScope, Env } from '@tybys/emnapi-runtime'
 import { API } from './implement'
 import { getValue, setValue, toPtr } from './util'
 
@@ -35,7 +33,7 @@ export class NAPI {
   /** @internal */
   private [kPointerSize]: number
 
-  constructor (ctx: IContext, wasm64?: boolean) {
+  constructor (ctx: Context, wasm64?: boolean) {
     if (!(ctx instanceof Context)) {
       throw new TypeError('Invalid context')
     }
@@ -101,7 +99,7 @@ export class NAPI {
       setErrorCode: (code: napi_status) => {
         setValue(new DataView(memory!.buffer), lastError.data + this[kPointerSize] * 2 + 4, code, 'i32')
       },
-      setErrorMessage: (ptr: const_char_p) => {
+      setErrorMessage: (ptr: number | bigint) => {
         setValue(new DataView(memory!.buffer), lastError.data, ptr, '*', wasm64)
       },
       dispose: () => {

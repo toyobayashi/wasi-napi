@@ -1,7 +1,7 @@
+import { type napi_env, type Ptr, type size_t, type napi_callback, type void_p, napi_status, type napi_callback_info, type void_pp, type napi_value, CallbackInfo } from '@tybys/emnapi-runtime'
 import { implement, _private, createFunction } from '../api'
 import type { IAPI } from '../api'
 import { getValue, setValue } from '../util'
-import type { CallbackInfo } from '../../runtime/CallbackInfo'
 
 function napi_create_function (this: IAPI, env: napi_env, utf8name: Ptr, length: size_t, cb: napi_callback, data: void_p, result: Ptr): napi_status {
   const { ctx, wasm64, memory } = _private.get(this)!

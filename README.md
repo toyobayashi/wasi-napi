@@ -117,9 +117,11 @@ Browser:
 ```html
 <script src="./node_modules/memfs-browser/dist/memfs.min.js"></script>
 <script src="./node_modules/@tybys/wasm-util/dist/wasm-util.min.js"></script>
+<script src="./node_modules/@tybys/emnapi-runtime/dist/emnapi.min.js"></script>
 <script src="./node_modules/@tybys/wasi-napi/dist/wasi-napi.min.js"></script>
 <script>
   // Create global context so that we can use it across multiple wasm instance
+  // wasiNapi.createContext === emnapi.createContext
   window.wasiNapiContext = wasiNapi.createContext()
 </script>
 
@@ -164,6 +166,7 @@ Node.js: (do not forget `--experimental-wasi-unstable-preview1` CLI flag)
 const fs = require('fs')
 const { WASI } = require('wasi')
 const { createContext, NAPI } = require('@tybys/wasi-napi')
+// createContext === require('@tybys/emnapi-runtime').createContext
 
 global.wasiNapiContext = createContext()
 

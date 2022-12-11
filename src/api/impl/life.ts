@@ -1,8 +1,19 @@
+import {
+  type napi_env,
+  type Ptr,
+  napi_status,
+  HandleScope,
+  type napi_handle_scope,
+  EscapableHandleScope,
+  type napi_escapable_handle_scope,
+  type napi_value,
+  type uint32_t,
+  Reference,
+  type napi_ref
+} from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'
-import { EscapableHandleScope, HandleScope } from '../../runtime/HandleScope'
-import { Reference } from '../../runtime/Reference'
 
 function napi_open_handle_scope (this: IAPI, env: napi_env, result: Ptr): napi_status {
   const { ctx, wasm64, memory } = _private.get(this)!

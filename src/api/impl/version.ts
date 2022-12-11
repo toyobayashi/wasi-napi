@@ -1,3 +1,4 @@
+import type { napi_env, Ptr, napi_status } from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'

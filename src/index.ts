@@ -2,6 +2,5 @@
  * @packageDocumentation
  */
 
-export type { IContext } from './runtime/Context'
-export { createContext } from './runtime/Context'
+export { createContext } from '@tybys/emnapi-runtime'
 export { NAPI } from './api/index'

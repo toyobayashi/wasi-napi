@@ -1,3 +1,4 @@
+import { type napi_env, type Ptr, napi_status, type napi_value, type const_char_p, type size_t } from '@tybys/emnapi-runtime'
 import { implement, setErrorCode, _private } from '../api'
 import type { IAPI } from '../api'
 import { abort, getValue, setValue, UTF8ToString } from '../util'

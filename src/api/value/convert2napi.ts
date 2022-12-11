@@ -1,8 +1,8 @@
+import { supportBigInt, NotSupportBigIntError, napi_status } from '@tybys/emnapi-runtime'
+import type { const_char16_t_p, const_char_p, double, int, int32_t, napi_env, Ptr, size_t, uint32_t } from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue, UTF16ToString, UTF8ToString } from '../util'
-import { supportBigInt } from '../../runtime/util'
-import { NotSupportBigIntError } from '../../runtime/errors'
 
 function napi_create_int32 (this: IAPI, env: napi_env, value: int32_t, result: Ptr): napi_status {
   const { ctx, wasm64, memory } = _private.get(this)!

@@ -1,10 +1,24 @@
-import { Reference } from '../runtime/Reference'
-import type { Context } from '../runtime/Context'
+import {
+  Reference, CallbackInfo, HandleScope,
+  canSetFunctionName, supportBigInt, supportFinalizer, supportNewFunction,
+  napi_status,
+  napi_property_attributes,
+  napi_callback,
+  napi_finalize
+} from '@tybys/emnapi-runtime'
+import type {
+  Context,
+  Env,
+  Ptr,
+  void_p,
+  napi_env,
+  uint32_t,
+  napi_value,
+  const_char_p,
+  size_t,
+  void_pp
+} from '@tybys/emnapi-runtime'
 import { Memory, extendMemory, toPtr, setValue, UTF8ToString } from './util'
-import type { Env } from '../runtime/env'
-import { CallbackInfo } from '../runtime/CallbackInfo'
-import { HandleScope } from '../runtime/HandleScope'
-import { canSetFunctionName, supportBigInt, supportFinalizer, supportNewFunction } from '../runtime/util'
 
 export interface IWrap {
   wasm64: boolean
@@ -108,8 +122,8 @@ export function getArrayBufferPointer (this: IAPI, arrayBuffer: ArrayBuffer): vo
   }
 
   const wasm64 = wrap.wasm64
-  pointer = wrap.malloc(toPtr(arrayBuffer.byteLength, wasm64))
-  HEAPU8.set(new Uint8Array(arrayBuffer), Number(pointer))
+  pointer = Number(wrap.malloc(toPtr(arrayBuffer.byteLength, wasm64)))
+  HEAPU8.set(new Uint8Array(arrayBuffer), pointer)
   arrayBufferMemoryMap.set(arrayBuffer, pointer)
   memoryPointerDeleter.register(arrayBuffer, pointer)
   return pointer
@@ -136,8 +150,8 @@ export function getViewPointer (this: IAPI, view: ArrayBufferView): void_p {
   }
 
   const wasm64 = wrap.wasm64
-  pointer = wrap.malloc(toPtr(view.byteLength, wasm64))
-  HEAPU8.set(new Uint8Array(view.buffer, view.byteOffset, view.byteLength), Number(pointer))
+  pointer = Number(wrap.malloc(toPtr(view.byteLength, wasm64)))
+  HEAPU8.set(new Uint8Array(view.buffer, view.byteOffset, view.byteLength), pointer)
   typedArrayMemoryMap.set(view, pointer)
   memoryPointerDeleter.register(view, pointer)
   return pointer

@@ -1,8 +1,21 @@
+import {
+  type napi_env,
+  type Ptr,
+  type size_t,
+  type napi_callback,
+  type void_p,
+  napi_status,
+  napi_property_attributes,
+  type napi_value,
+  type napi_finalize,
+  supportFinalizer,
+  NotSupportWeakRefError,
+  type void_pp,
+  type Const
+} from '@tybys/emnapi-runtime'
 import { createFunction, defineProperty, implement, unwrap, wrap, _private } from '../api'
 import type { IAPI } from '../api'
 import { getValue, setValue, UTF8ToString } from '../util'
-import { supportFinalizer } from '../../runtime/util'
-import { NotSupportWeakRefError } from '../../runtime/errors'
 
 function napi_define_class (
   this: IAPI, env: napi_env,

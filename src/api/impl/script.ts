@@ -1,7 +1,7 @@
+import { type napi_env, type napi_value, type Ptr, napi_status, HandleStore } from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'
-import { HandleStore } from '../../runtime/Handle'
 
 function napi_run_script (this: IAPI, env: napi_env, script: napi_value, result: Ptr): napi_status {
   const { ctx, wasm64, memory } = _private.get(this)!

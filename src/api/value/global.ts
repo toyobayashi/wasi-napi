@@ -1,4 +1,4 @@
-import { HandleStore } from '../../runtime/Handle'
+import { type napi_env, type bool, type Ptr, type napi_status, HandleStore } from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'

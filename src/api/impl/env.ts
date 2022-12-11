@@ -1,7 +1,7 @@
+import { type napi_env, type void_p, type napi_finalize, type napi_status, RefBase, type void_pp } from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'
-import { RefBase } from '../../runtime/RefBase'
 
 function napi_set_instance_data (this: IAPI, env: napi_env, data: void_p, finalize_cb: napi_finalize, finalize_hint: void_p): napi_status {
   const { ctx } = _private.get(this)!

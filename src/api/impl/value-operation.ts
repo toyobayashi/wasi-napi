@@ -1,7 +1,15 @@
+import {
+  type napi_env,
+  type napi_value,
+  type Ptr,
+  napi_status,
+  napi_valuetype,
+  HandleStore,
+  type Handle
+} from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'
-import { Handle, HandleStore } from '../../runtime/Handle'
 
 function napi_typeof (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
   const { ctx, memory } = _private.get(this)!

@@ -1,10 +1,23 @@
+import {
+  type napi_env,
+  type Ptr,
+  napi_status,
+  type size_t,
+  type void_pp,
+  type double,
+  type void_p,
+  type napi_finalize,
+  supportFinalizer,
+  NotSupportWeakRefError,
+  ExternalHandle,
+  Reference,
+  type napi_value,
+  napi_typedarray_type,
+  type const_char_p
+} from '@tybys/emnapi-runtime'
 import { implement, wrap, _private } from '../api'
 import type { IAPI } from '../api'
 import { createTypedArray, setValue, UTF8ToString } from '../util'
-import { supportFinalizer } from '../../runtime/util'
-import { NotSupportWeakRefError } from '../../runtime/errors'
-import { ExternalHandle } from '../../runtime/Handle'
-import { Reference } from '../../runtime/Reference'
 
 function napi_create_array (this: IAPI, env: napi_env, result: Ptr): napi_status {
   const { ctx, wasm64, memory } = _private.get(this)!

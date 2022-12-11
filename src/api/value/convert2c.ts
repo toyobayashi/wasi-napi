@@ -1,9 +1,8 @@
+import { supportBigInt, NotSupportBigIntError, napi_status, napi_typedarray_type } from '@tybys/emnapi-runtime'
+import type { ExternalHandle, char16_t_p, char_p, napi_env, napi_value, Ptr, size_t, void_pp } from '@tybys/emnapi-runtime'
 import { implement, _private, getArrayBufferPointer, getViewPointer } from '../api'
 import type { IAPI } from '../api'
 import { getValue, setValue, lengthBytesUTF8, stringToUTF8Array, stringToUTF16Array } from '../util'
-import { supportBigInt } from '../../runtime/util'
-import { NotSupportBigIntError } from '../../runtime/errors'
-import type { ExternalHandle } from '../../runtime/Handle'
 
 function napi_get_array_length (this: IAPI, env: napi_env, value: napi_value, result: Ptr): napi_status {
   const { ctx, memory } = _private.get(this)!

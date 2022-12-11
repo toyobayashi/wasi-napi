@@ -1,7 +1,7 @@
+import { type napi_env, type Ptr, type napi_status, Deferred, type napi_deferred, type napi_value } from '@tybys/emnapi-runtime'
 import { implement, _private } from '../api'
 import type { IAPI } from '../api'
 import { setValue } from '../util'
-import { Deferred } from '../../runtime/Deferred'
 
 function napi_create_promise (this: IAPI, env: napi_env, deferred: Ptr, promise: Ptr): napi_status {
   const { ctx, wasm64, memory } = _private.get(this)!

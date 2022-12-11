@@ -97,7 +97,11 @@ module.exports = defineConfig({
       },
       minify: false,
       type: 'umd',
-      strict: false
+      strict: false,
+      globals: {
+        '@tybys/emnapi-runtime': 'emnapi'
+      },
+      resolveOnly: [/^(?!(@tybys\/emnapi)).*?$/]
     },
     {
       entry,
@@ -107,7 +111,11 @@ module.exports = defineConfig({
       },
       minify: true,
       type: 'umd',
-      strict: false
+      strict: false,
+      globals: {
+        '@tybys/emnapi-runtime': 'emnapi'
+      },
+      resolveOnly: [/^(?!(@tybys\/emnapi)).*?$/]
     },
     {
       entry: entryESM,
@@ -116,7 +124,8 @@ module.exports = defineConfig({
         path: dist
       },
       minify: false,
-      type: 'esm'
+      type: 'esm',
+      resolveOnly: [/^(?!(@tybys\/emnapi)).*?$/]
     },
     {
       entry: entryESM,
@@ -125,7 +134,8 @@ module.exports = defineConfig({
         path: dist
       },
       minify: true,
-      type: 'esm'
+      type: 'esm',
+      resolveOnly: [/^(?!(@tybys\/emnapi)).*?$/]
     },
     // {
     //   entry,
@@ -144,7 +154,7 @@ module.exports = defineConfig({
       },
       minify: false,
       type: 'esm-bundler',
-      resolveOnly: [/^(?!(tslib)).*?$/]
+      resolveOnly: [/^(?!(tslib|@tybys\/emnapi)).*?$/]
     }
   ]
 })

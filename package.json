@@ -1,6 +1,6 @@
 {
   "name": "@tybys/wasi-napi",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "",
   "main": "./lib/cjs/index.js",
   "module": "./dist/wasi-napi.esm-bundler.js",
@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsgo build",
     "watch": "tsgo watch",
-    "test": "node ./test/script/test.js",
+    "test": "cross-env NODE_TEST_KNOWN_GLOBALS=0 node ./test/script/test.js",
     "lint": "eslint ./src/**/*.{ts,js} --fix",
     "prepare": "npm run build"
   },
@@ -38,13 +38,14 @@
   "author": "toyobayashi",
   "license": "MIT",
   "devDependencies": {
-    "@tybys/tsgo": "^1.2.0",
     "@tybys/ts-transform-module-specifier": "^0.0.2",
     "@tybys/ts-transform-pure-class": "^0.1.1",
+    "@tybys/tsgo": "^1.2.0",
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^5.32.0",
     "@typescript-eslint/parser": "^5.32.0",
     "chalk": "^4.1.1",
+    "cross-env": "^7.0.3",
     "eslint": "^8.21.0",
     "eslint-config-standard-with-typescript": "^22.0.0",
     "eslint-plugin-import": "^2.26.0",
@@ -55,6 +56,7 @@
     "typescript": "~4.8.3"
   },
   "dependencies": {
+    "@tybys/emnapi-runtime": "^0.21.0",
     "tslib": "^2.4.0"
   }
 }
